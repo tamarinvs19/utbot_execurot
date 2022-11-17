@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "utbot-executor"
+version = "0.1.0"
+description = ""
+authors = ["Vyacheslav Tamarin <vyacheslav.tamarin@yandex.ru>"]
+readme = "README.md"
+packages = [{include = "utbot_executor"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+coverage = "^6.5.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

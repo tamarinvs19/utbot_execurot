@@ -10,8 +10,11 @@ def __get_lines(start, end, lines):
     return [x for x in lines if start < x < end]
 
 
-def run_calculate_function_value(function, args, kwargs, fullpath, output):
-    __cov = coverage.Coverage(data_suffix=True)
+def run_calculate_function_value(database_name, function, args, kwargs, fullpath, output):
+    __cov = coverage.Coverage(
+        data_file=database_name,
+        data_suffix=True,
+    )
     __cov.start()
     try:
         with suppress_stdout():

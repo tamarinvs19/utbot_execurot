@@ -15,6 +15,7 @@ class A:
 
 def test_run_function():
     run_calculate_function_value(
+        'database_func',
         func,
         [1, 2],
         {'c': 3, 'd': 4},
@@ -37,6 +38,7 @@ def test_run_function():
 def test_run_method():
     a = A(100)
     run_calculate_function_value(
+        'database_func_A',
         a.func,
         [1, 2],
         {'c': 3, 'd': 4},

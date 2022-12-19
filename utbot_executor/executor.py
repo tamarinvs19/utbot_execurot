@@ -13,7 +13,7 @@ def __get_lines(start, end, lines):
 def run_calculate_function_value(database_name, function, args, kwargs, fullpath, output):
     __cov = coverage.Coverage(
         data_file=database_name,
-        data_suffix=True,
+        data_suffix=False,
     )
     __cov.start()
     try:

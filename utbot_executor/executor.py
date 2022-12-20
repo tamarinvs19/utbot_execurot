@@ -16,7 +16,7 @@ def run_calculate_function_value(database_name, function, args, kwargs, fullpath
         data_file=database_name,
         data_suffix=".coverage",
     )
-    logging.warning(__cov)
+    logging.warning(__cov.get_data().data_filename())
     __cov.start()
     try:
         with suppress_stdout():

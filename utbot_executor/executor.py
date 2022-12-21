@@ -1,7 +1,6 @@
 import coverage
 import json
 import inspect
-import logging
 
 from utbot_executor.serializer import PythonTreeSerializer
 from utbot_executor.utils import suppress_stdout
@@ -16,7 +15,6 @@ def run_calculate_function_value(database_name, function, args, kwargs, fullpath
         data_file=database_name,
         data_suffix=".coverage",
     )
-    logging.warning(__cov.get_data().data_filename())
     __cov.start()
     try:
         with suppress_stdout():

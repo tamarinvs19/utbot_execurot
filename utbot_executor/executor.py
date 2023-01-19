@@ -1,6 +1,9 @@
-import coverage
+"""Python code executor for UnitTestBot"""
+from typing import Any, Callable, Dict, List
 import json
 import inspect
+import coverage
+
 
 from utbot_executor.serializer import PythonTreeSerializer
 from utbot_executor.utils import suppress_stdout
@@ -10,7 +13,19 @@ def __get_lines(start, end, lines):
     return [x for x in lines if start < x < end]
 
 
-def run_calculate_function_value(database_name, function, args, kwargs, fullpath, output):
+def fail_argument_initialization(output: str, exception: Exception):
+    with open(output, "w", encoding="utf-8") as __out_file:
+        __out_file.write(exception)
+
+
+def run_calculate_function_value(
+        database_name: str,
+        function: Callable,
+        args: List[Any],
+        kwargs: Dict[str, Any],
+        fullpath: str,
+        output: str
+    ):
     __cov = coverage.Coverage(
         data_file=database_name,
         data_suffix=".coverage",
@@ -33,11 +48,11 @@ def run_calculate_function_value(database_name, function, args, kwargs, fullpath
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = __get_lines(__start, __end, __missed)
     __serialized = PythonTreeSerializer().dumps(__result)
-    with open(output, "w") as __out_file:
+    with open(output, "w", encoding="utf-8") as __out_file:
         __output_data = "\n".join([
             str(__status),
             str(json.dumps(__serialized)),
             str(__stmts_filtered_with_def),
-            str(__missed_filtered)
+            str(__missed_filtered),
         ])
         __out_file.write(__output_data)

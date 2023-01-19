@@ -15,6 +15,13 @@ def __get_lines(start, end, lines):
 
 def fail_argument_initialization(output: str, exception: Exception):
     with open(output, "w", encoding="utf-8") as __out_file:
+        __status = "arguments_fail"
+        __output_data = "\n".join([
+            str(__status),
+            str(exception),
+            "",
+            "",
+        ])
         __out_file.write(exception)
 
 

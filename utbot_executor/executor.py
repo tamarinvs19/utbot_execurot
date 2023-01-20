@@ -24,7 +24,7 @@ def serialize_state(
     ids, serialized_memory = serialize_objects(all_arguments)
     return (
             ids[:len(args)],
-            dict(zip(kwargs.keys(), ids[len(args):len(args)+len(kwargs)])),
+            ids[len(args):len(args)+len(kwargs)],
             ids[-1] if result is not None else None,
             serialized_memory
             )

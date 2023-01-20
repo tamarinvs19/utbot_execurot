@@ -19,7 +19,7 @@ def serialize_state(
         args: List[Any],
         kwargs: Dict[str, Any],
         result: Optional[Any] = None,
-        ) -> Tuple[List[str], Dict[str, str], Optional[str], str]:
+        ) -> Tuple[List[str], List[str], Optional[str], str]:
     all_arguments = args + list(kwargs.values()) + ([result] if result is not None else [])
     ids, serialized_memory = serialize_objects(all_arguments)
     return (

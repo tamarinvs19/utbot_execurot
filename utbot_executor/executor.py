@@ -4,7 +4,7 @@ import json
 import inspect
 import coverage
 
-from deep_serialization import serialize_objects
+from deep_serialization.deep_serialization import serialize_objects
 
 
 from utbot_executor.serializer import PythonTreeSerializer
@@ -20,11 +20,11 @@ def serialize_state(
         kwargs: Dict[str, Any],
         result: Optional[Any] = None,
         ) -> Tuple[List[str], Dict[str, str], Optional[str], str]:
-    all_arguments = args + kwargs.values + ([result] if result is not None else [])
+    all_arguments = args + list(kwargs.values()) + ([result] if result is not None else [])
     ids, serialized_memory = serialize_objects(all_arguments)
     return (
             ids[:len(args)],
-            dict(zip(kwargs.keys, ids[len(args):len(args)+len(kwargs)])),
+            dict(zip(kwargs.keys(), ids[len(args):len(args)+len(kwargs)])),
             ids[-1] if result is not None else None,
             serialized_memory
             )

@@ -26,7 +26,7 @@ def serialize_state(
             ids[:len(args)],
             ids[len(args):len(args)+len(kwargs)],
             ids[-1] if result is not None else None,
-            serialized_memory
+            serialized_memory,
             )
 
 
@@ -72,8 +72,8 @@ def run_calculate_function_value(
             str(__missed_filtered),
             state_before,
             state_after,
-            str(args_ids),
-            str(kwargs_ids),
+            json.dumps(args_ids),
+            json.dumps(kwargs_ids),
             str(result_id),
         ])
         __out_file.write(__output_data)

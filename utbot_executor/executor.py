@@ -1,8 +1,10 @@
 """Python code executor for UnitTestBot"""
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import json
 import inspect
 import coverage
+
+from deep_serialization import serialize_objects
 
 
 from utbot_executor.serializer import PythonTreeSerializer
@@ -13,16 +15,19 @@ def __get_lines(start, end, lines):
     return [x for x in lines if start < x < end]
 
 
-def fail_argument_initialization(output: str, exception: Exception):
-    with open(output, "w", encoding="utf-8") as __out_file:
-        __status = "arguments_fail"
-        __output_data = "\n".join([
-            str(__status),
-            str(exception),
-            "",
-            "",
-        ])
-        __out_file.write(exception)
+def serialize_state(
+        args: List[Any],
+        kwargs: Dict[str, Any],
+        result: Optional[Any] = None,
+        ) -> Tuple[List[str], Dict[str, str], Optional[str], str]:
+    all_arguments = args + kwargs.values + ([result] if result is not None else [])
+    ids, serialized_memory = serialize_objects(all_arguments)
+    return (
+            ids[:len(args)],
+            dict(zip(kwargs.keys, ids[len(args):len(args)+len(kwargs)])),
+            ids[-1] if result is not None else None,
+            serialized_memory
+            )
 
 
 def run_calculate_function_value(
@@ -33,6 +38,8 @@ def run_calculate_function_value(
         fullpath: str,
         output: str
     ):
+    _, _, _, state_before = serialize_state(args, kwargs)
+
     __cov = coverage.Coverage(
         data_file=database_name,
         data_suffix=".coverage",
@@ -47,6 +54,7 @@ def run_calculate_function_value(
         __result = __exception
         __status = "fail"
     __cov.stop()
+
     (__sources, __start, ) = inspect.getsourcelines(function)
     __end = __start + len(__sources)
     (_, __stmts, _, __missed, _, ) = __cov.analysis2(fullpath)
@@ -54,12 +62,34 @@ def run_calculate_function_value(
     __stmts_filtered = __get_lines(__start, __end, __stmts)
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = __get_lines(__start, __end, __missed)
-    __serialized = PythonTreeSerializer().dumps(__result)
+
+    args_ids, kwargs_ids, result_id, state_after = serialize_state(args, kwargs, __result)
+
     with open(output, "w", encoding="utf-8") as __out_file:
         __output_data = "\n".join([
             str(__status),
-            str(json.dumps(__serialized)),
             str(__stmts_filtered_with_def),
             str(__missed_filtered),
+            state_before,
+            state_after,
+            str(args_ids),
+            str(kwargs_ids),
+            str(result_id),
         ])
         __out_file.write(__output_data)
+
+
+def fail_argument_initialization(output: str, exception: Exception):
+    with open(output, "w", encoding="utf-8") as __out_file:
+        __status = "arguments_fail"
+        __output_data = "\n".join([
+            str(__status),
+            str(exception),
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])
+        __out_file.write(exception)

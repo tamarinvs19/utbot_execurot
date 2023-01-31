@@ -18,14 +18,14 @@ def __get_lines(start, end, lines):
 def serialize_state(
         args: List[Any],
         kwargs: Dict[str, Any],
-        result: Optional[Any] = None,
-        ) -> Tuple[List[str], List[str], Optional[str], str]:
-    all_arguments = args + list(kwargs.values()) + ([result] if result is not None else [])
+        result: Any = None,
+        ) -> Tuple[List[str], List[str], str, str]:
+    all_arguments = args + list(kwargs.values()) + [result]
     ids, serialized_memory = serialize_objects(all_arguments)
     return (
             ids[:len(args)],
             ids[len(args):len(args)+len(kwargs)],
-            ids[-1] if result is not None else None,
+            ids[-1],
             serialized_memory,
             )
 

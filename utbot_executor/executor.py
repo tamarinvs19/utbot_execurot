@@ -66,6 +66,7 @@ def run_calculate_function_value(
 
     with open(output, "w", encoding="utf-8") as __out_file:
         __output_data = json.dumps({
+            "status": "success",
             "isException": __is_exception,
             "statements": __stmts_filtered_with_def,
             "missedStatements": __missed_filtered,
@@ -81,6 +82,7 @@ def run_calculate_function_value(
 def fail_argument_initialization(output: str, exception: Exception):
     with open(output, "w", encoding="utf-8") as __out_file:
         __output_data = json.dumps({
+            "status": "fail",
             'exception': exception,
         })
         __out_file.write(exception)

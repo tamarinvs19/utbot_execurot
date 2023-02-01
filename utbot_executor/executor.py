@@ -40,6 +40,7 @@ def run_calculate_function_value(
     ):
     _, _, _, state_before = serialize_state(args, kwargs)
 
+    __is_exception = False
     __cov = coverage.Coverage(
         data_file=database_name,
         data_suffix=".coverage",
@@ -48,11 +49,9 @@ def run_calculate_function_value(
     try:
         with suppress_stdout():
             __result = function(*args, **kwargs)
-            __status = "success"
-
     except Exception as __exception:
         __result = __exception
-        __status = "fail"
+        __is_exception = True
     __cov.stop()
 
     (__sources, __start, ) = inspect.getsourcelines(function)
@@ -66,30 +65,22 @@ def run_calculate_function_value(
     args_ids, kwargs_ids, result_id, state_after = serialize_state(args, kwargs, __result)
 
     with open(output, "w", encoding="utf-8") as __out_file:
-        __output_data = "\n".join([
-            str(__status),
-            str(__stmts_filtered_with_def),
-            str(__missed_filtered),
-            state_before,
-            state_after,
-            json.dumps(args_ids),
-            json.dumps(kwargs_ids),
-            str(result_id),
-        ])
+        __output_data = json.dumps({
+            "isException": __is_exception,
+            "statements": __stmts_filtered_with_def,
+            "missedStatements": __missed_filtered,
+            "stateBefore": state_before,
+            "stateAfter": state_after,
+            "argsIds": args_ids,
+            "kwargsIds": kwargs_ids,
+            "resultId": result_id,
+        })
         __out_file.write(__output_data)
 
 
 def fail_argument_initialization(output: str, exception: Exception):
     with open(output, "w", encoding="utf-8") as __out_file:
-        __status = "arguments_fail"
-        __output_data = "\n".join([
-            str(__status),
-            str(exception),
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ])
+        __output_data = json.dumps({
+            'exception': exception,
+        })
         __out_file.write(exception)

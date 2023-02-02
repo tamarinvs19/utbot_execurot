@@ -4,7 +4,7 @@ import json
 import inspect
 import coverage
 
-from deep_serialization.deep_serialization import serialize_objects
+from deep_serialization.deep_serialization import serialize_objects, serialize_to_json_objects
 
 
 from utbot_executor.serializer import PythonTreeSerializer
@@ -21,7 +21,7 @@ def serialize_state(
         result: Any = None,
         ) -> Tuple[List[str], List[str], str, str]:
     all_arguments = args + list(kwargs.values()) + [result]
-    ids, serialized_memory = serialize_objects(all_arguments)
+    ids, serialized_memory = serialize_to_json_objects(all_arguments)
     return (
             ids[:len(args)],
             ids[len(args):len(args)+len(kwargs)],

@@ -1,5 +1,8 @@
-import pickle
+import dataclasses
+import json
 from itertools import zip_longest
+import pickle
+from typing import Dict, Union
 
 
 class PythonTreeSerializer:

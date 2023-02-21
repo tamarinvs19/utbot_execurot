@@ -1,10 +1,24 @@
-import argparse
+from enum import Enum
+import logging
 import socket
-import threading
-import queue
+import time
 
 from utbot_executor.parser import parse_request, serialize_response
 from utbot_executor.executor import PythonExecutor
+
+logging.basicConfig(
+        format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
+        datefmt='%m/%d/%Y %H:%M:%S',
+        level=logging.INFO
+        )
+
+
+class SocketMode(Enum):
+    COMMAND = 0  # 4 bytes
+    SIZE = 1     # 16 bytes
+    CONTENT = 2  # <= 2**128 bytes
+
+RECV_SIZE = 2048
 
 
 class PythonExecuteServer:
@@ -13,40 +27,58 @@ class PythonExecuteServer:
             hostname: str,
             port: int,
             ):
-        self.hostname = hostname
-        self.port = port
-
-        self.serversocket = socket.create_server((self.hostname, self.port), family=socket.AF_INET)
-        self.serversocket.listen(1)
-
-        self.counter = 0
+        self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.clientsocket.connect((hostname, port))
         self.executor = PythonExecutor()
 
-    def run(self):
-        clientsocket, _ = self.serversocket.accept()
-        self.handler(clientsocket)
-        clientsocket.close()
+    def run(self) -> None:
+        logging.info('PythonExecutor is ready...')
+        try:
+            self.handler()
+        finally:
+            self.clientsocket.close()
 
-    def handler(self, clientsocket: socket.socket):
-        print('Start working...')
-        message_body: bytes = b''
+    def handler(self) -> None:
+        logging.info('Start working...')
+
         while True:
-            message = clientsocket.recv(2048)
-            print('Got data: ', message)
+            command = self.clientsocket.recv(4)
 
-            if message == b'STOP':
+            if command == b'STOP':
                 break
-            if message == b'PING':
-                clientsocket.sendall(bytes("PONG\n", "utf-8"))
-            elif message == b'END':
+            if command == b'DATA':
+                message_size = int(self.clientsocket.recv(16).decode())
+                logging.debug('Got message size: %d bytes', message_size)
+                message_body = b''
+
+                while len(message_body) < message_size:
+                    message = self.clientsocket.recv(
+                            min(RECV_SIZE, message_size - len(message_body))
+                            )
+                    message_body += message
+                    logging.debug(
+                        'Update content, current size: %d / %d bytes',
+                        len(message_body),
+                        message_size,
+                    )
+
                 request = parse_request(message_body.decode())
                 response = self.executor.run_function(request)
+                logging.debug('Got response')
                 serialized_response = serialize_response(response)
-                clientsocket.sendall(bytes(serialized_response, "utf-8") + b'\n')
-                message_body = b''
-            else:
-                message_body += message
+                logging.debug('Serialized response')
 
-        print('All done...')
+                bytes_data = serialized_response.encode()
+                response_size = str(len(bytes_data)).rjust(16, "0")
+                self.clientsocket.send(response_size.encode())
+                logging.debug('Sent size: %s', response_size)
 
-
+                sended_size = 0
+                while len(bytes_data) > sended_size:
+                    response_bytes = bytes_data[
+                            sended_size : min(sended_size+RECV_SIZE, len(bytes_data))
+                            ]
+                    sended_size += len(response_bytes)
+                    self.clientsocket.send(response_bytes)
+                logging.debug('Sent all data')
+        logging.info('All done...')

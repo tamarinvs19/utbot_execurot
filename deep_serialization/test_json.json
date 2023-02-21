@@ -1,0 +1,196 @@
+{
+ "140322626906368": {
+  "strategy": "list",
+  "kind": "builtins.list",
+  "comparable": false,
+  "items": [
+   "140322633007344",
+   "140322633007376",
+   "140322628712560",
+   "140322628962352",
+   "140322628970048",
+   "140322639867456",
+   "140322627877328",
+   "140322626859840"
+  ]
+ },
+ "140322633007344": {
+  "strategy": "repr",
+  "kind": "builtins.int",
+  "comparable": true,
+  "value": "1"
+ },
+ "140322633007376": {
+  "strategy": "repr",
+  "kind": "builtins.int",
+  "comparable": true,
+  "value": "2"
+ },
+ "140322628712560": {
+  "strategy": "repr",
+  "kind": "builtins.float",
+  "comparable": true,
+  "value": "float('inf')"
+ },
+ "140322628962352": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'abc'"
+ },
+ "140322628970048": {
+  "strategy": "dict",
+  "kind": "builtins.dict",
+  "comparable": true,
+  "items": {
+   "140322633007344": "140322633007344"
+  }
+ },
+ "140322639867456": {
+  "strategy": "repr",
+  "kind": "types.NoneType",
+  "comparable": true,
+  "value": "None"
+ },
+ "140322628429440": {
+  "strategy": "list",
+  "kind": "builtins.tuple",
+  "comparable": true,
+  "items": [
+   "94206762342064",
+   "140322639860320",
+   "140322639867456"
+  ]
+ },
+ "94206762342064": {
+  "strategy": "repr",
+  "kind": "builtins.type",
+  "comparable": true,
+  "value": "__main__.B"
+ },
+ "140322639860320": {
+  "strategy": "repr",
+  "kind": "builtins.type",
+  "comparable": true,
+  "value": "builtins.object"
+ },
+ "140322627877328": {
+  "strategy": "reduce",
+  "kind": "__main__.B",
+  "comparable": false,
+  "constructor": "copyreg._reconstructor",
+  "args": "140322628429440",
+  "state": "140322628206016",
+  "listitems": "140322626988224",
+  "dictitems": "140322626988672"
+ },
+ "140322628206016": {
+  "strategy": "dict",
+  "kind": "builtins.dict",
+  "comparable": true,
+  "items": {
+   "140322629016944": "140322633007344",
+   "140322629023600": "140322633007376",
+   "140322629055152": "140322633007408",
+   "140322628762480": "140322627968656"
+  }
+ },
+ "140322629016944": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'b1'"
+ },
+ "140322629023600": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'b2'"
+ },
+ "140322629055152": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'b3'"
+ },
+ "140322633007408": {
+  "strategy": "repr",
+  "kind": "builtins.int",
+  "comparable": true,
+  "value": "3"
+ },
+ "140322628762480": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'time'"
+ },
+ "140322628578240": {
+  "strategy": "list",
+  "kind": "builtins.tuple",
+  "comparable": true,
+  "items": [
+   "140322626841712"
+  ]
+ },
+ "140322626841712": {
+  "strategy": "repr",
+  "kind": "builtins.bytes",
+  "comparable": true,
+  "value": "b'\\x07\\xe7\\x01\\x1e\\x11!4\\x00\\x87F'"
+ },
+ "140322627968656": {
+  "strategy": "reduce",
+  "kind": "datetime.datetime",
+  "comparable": true,
+  "constructor": "datetime.datetime",
+  "args": "140322628578240",
+  "state": "140322626986560",
+  "listitems": "140322626987264",
+  "dictitems": "140322626987840"
+ },
+ "140322626986560": {
+  "strategy": "dict",
+  "kind": "builtins.dict",
+  "comparable": true,
+  "items": {}
+ },
+ "140322626987264": {
+  "strategy": "list",
+  "kind": "builtins.list",
+  "comparable": true,
+  "items": []
+ },
+ "140322626987840": {
+  "strategy": "dict",
+  "kind": "builtins.dict",
+  "comparable": true,
+  "items": {}
+ },
+ "140322626988224": {
+  "strategy": "list",
+  "kind": "builtins.list",
+  "comparable": true,
+  "items": []
+ },
+ "140322626988672": {
+  "strategy": "dict",
+  "kind": "builtins.dict",
+  "comparable": true,
+  "items": {}
+ },
+ "140322626859840": {
+  "strategy": "list",
+  "kind": "builtins.list",
+  "comparable": true,
+  "items": [
+   "140322629283760"
+  ]
+ },
+ "140322629283760": {
+  "strategy": "repr",
+  "kind": "builtins.str",
+  "comparable": true,
+  "value": "'Alex'"
+ }
+}

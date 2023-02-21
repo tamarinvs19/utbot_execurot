@@ -1,38 +1,90 @@
 """Python code executor for UnitTestBot"""
-from typing import Any, Callable, Dict, List, Tuple
-import json
 import inspect
+import importlib
+import json
+import logging
+import sys
+import traceback
+from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
 import coverage
 
 from deep_serialization.deep_serialization import serialize_objects
 from deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
+from deep_serialization.utils import PythonId
 
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout
 
+logging.basicConfig(
+        format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
+        datefmt='%m/%d/%Y %H:%M:%S',
+        level=logging.INFO
+        )
+
 
 class PythonExecutor:
+    imports: Set[str]
+    syspaths: List[str]
+
     def __init__(self):
-        pass
+        self.imports = set()
+        self.syspaths = []
+
+    def add_syspaths(self, syspaths: Iterable[str]):
+        for path in syspaths:
+            self.syspaths.append(path)
+            sys.path.append(path)
+
+    def clear_syspaths(self):
+        for path in self.syspaths:
+            self.syspaths -= 1
+            sys.path.remove(path)
+
+    def add_imports(self, imports: Iterable[str]):
+        for module in imports:
+            # submodules = module.split('.')
+            # for i, _ in enumerate(submodules):
+            #     fullpath = '.'.join(submodules[:i+1])
+            #     if fullpath not in self.imports:
+            module_name = module.split('.')[0]
+            globals()[module_name] = importlib.import_module(module)
+            self.imports.add(module)
+
+    def clear_imports(self):
+        for module in self.imports:
+            globals().pop(module)
+        self.imports.clear()
 
     def run_function(self, request: ExecutionRequest) -> ExecutionResponse:
+        logging.debug("Prepare to run function %s", request.function_name)
         memory_dump = deserialize_memory_objects(request.serialized_memory)
+        logging.debug("MemoryDump %s", memory_dump.objects)
         loader = DumpLoader(memory_dump)
-        loader.add_syspaths(request.syspaths)
-        loader.add_imports(request.imports)
+        self.add_syspaths(request.syspaths)
+        logging.debug("New imports %s", ", ".join(request.imports))
+        self.add_imports(request.imports)
         try:
-            function = globals()[request.function_name]
-            args = [loader.load_objects(arg_id) for arg_id in request.arguments_ids]
+            function = getattr(
+                    importlib.import_module(request.function_module),
+                    request.function_name
+                    )
+            logging.debug("Function OK")
+            args = [loader.load_object(PythonId(arg_id)) for arg_id in request.arguments_ids]
+            logging.debug("Args OK")
             kwargs: dict[str, Any] = {}
         except Exception as ex:
-            return ExecutionFailResponse("fail", ex)
-        return run_calculate_function_value(
+            logging.debug("Error \n%s", traceback.format_exc())
+            return ExecutionFailResponse("fail", traceback.format_exc())
+        value = run_calculate_function_value(
                 request.coverage_db,
                 function,
                 args,
                 kwargs,
                 request.filepath
                 )
+        self.clear_imports()
+        self.clear_syspaths()
+        return value
 
 
 def __get_lines(start, end, lines):
@@ -116,4 +168,4 @@ def fail_argument_initialization(output: str, exception: Exception):
             "status": "fail",
             'exception': exception,
         })
-        __out_file.write(exception)
+        __out_file.write(__output_data)

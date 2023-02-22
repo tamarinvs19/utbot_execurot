@@ -16,6 +16,7 @@ from utbot_executor.parser import ExecutionRequest, ExecutionResponse, Execution
 from utbot_executor.utils import suppress_stdout
 
 logging.basicConfig(
+        filename='/home/vyacheslav/executor.log',
         format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
         datefmt='%m/%d/%Y %H:%M:%S',
         level=logging.INFO

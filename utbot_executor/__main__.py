@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from utbot_executor.listener import PythonExecuteServer
 

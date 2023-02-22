@@ -7,6 +7,7 @@ from utbot_executor.parser import parse_request, serialize_response
 from utbot_executor.executor import PythonExecutor
 
 logging.basicConfig(
+        filename='/home/vyacheslav/listener.log',
         format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
         datefmt='%m/%d/%Y %H:%M:%S',
         level=logging.INFO
@@ -43,6 +44,7 @@ class PythonExecuteServer:
 
         while True:
             command = self.clientsocket.recv(4)
+            logging.debug('Got command %s', command)
 
             if command == b'STOP':
                 break
@@ -69,16 +71,13 @@ class PythonExecuteServer:
                 logging.debug('Serialized response')
 
                 bytes_data = serialized_response.encode()
-                response_size = str(len(bytes_data)).rjust(16, "0")
-                self.clientsocket.send(response_size.encode())
+                response_size = str(len(bytes_data))
+                self.clientsocket.send(response_size.encode() + b'\n')
                 logging.debug('Sent size: %s', response_size)
 
                 sended_size = 0
                 while len(bytes_data) > sended_size:
-                    response_bytes = bytes_data[
-                            sended_size : min(sended_size+RECV_SIZE, len(bytes_data))
-                            ]
-                    sended_size += len(response_bytes)
-                    self.clientsocket.send(response_bytes)
+                    sended_size += self.clientsocket.send(bytes_data[sended_size:])
+
                 logging.debug('Sent all data')
         logging.info('All done...')

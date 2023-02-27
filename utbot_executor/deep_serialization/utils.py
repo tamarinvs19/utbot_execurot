@@ -13,7 +13,7 @@ def get_type(py_object: object) -> str:
     module = type(py_object).__module__
     return '{module}.{name}'.format(
         module=module,
-        name=type(py_object).__name__,
+        name=type(py_object).__qualname__,
     )
 
 
@@ -22,7 +22,7 @@ def get_type_name(type_: type) -> str:
         return 'types.NoneType'
     return '{module}.{name}'.format(
         module=type_.__module__,
-        name=type_.__name__,
+        name=type_.__qualname__,
     )
 
 

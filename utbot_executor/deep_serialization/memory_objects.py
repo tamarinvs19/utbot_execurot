@@ -3,7 +3,7 @@ from itertools import zip_longest
 import pickle
 from typing import Any, Dict, List, Optional, Type
 
-from deep_serialization.utils import PythonId, get_type_name, get_type, has_reduce, check_comparability, get_repr
+from utbot_executor.deep_serialization.utils import PythonId, get_type_name, get_type, has_reduce, check_comparability, get_repr
 
 
 class MemoryObject:
@@ -16,10 +16,10 @@ class MemoryObject:
 
     def __init__(self, obj: object) -> None:
         self.is_draft = True
-        self.kind = get_type(obj)
+        self.kind = get_type_name(obj) if isinstance(obj, type) else get_type(obj)
         self.obj = obj
 
-    def _initialize(self, deserialized_obj: object = None, comparable: bool = None) -> None:
+    def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
         self.deserialized_obj = deserialized_obj
         self.comparable = comparable
         self.is_draft = False
@@ -156,7 +156,7 @@ class ReduceMemoryObject(MemoryObject):
 
         deserialized_obj = self.deserialized_obj
         for key, value in serializer[self.state].items():
-            setattr(deserialized_obj, key, value)
+            object.__setattr__(deserialized_obj, key, value)
         for item in serializer[self.listitems]:
             deserialized_obj.append(item)
         for key, value in serializer[self.dictitems].items():
@@ -206,7 +206,9 @@ class ReprMemoryObjectProvider(MemoryObjectProvider):
 class MemoryDump:
     objects: Dict[PythonId, MemoryObject]
 
-    def __init__(self, objects: Dict[PythonId, MemoryObject] = {}):
+    def __init__(self, objects: Optional[Dict[PythonId, MemoryObject]] = None):
+        if objects is None:
+            objects = {}
         self.objects = objects
 
 
@@ -227,6 +229,9 @@ class PythonSerializer:
             cls.memory = MemoryDump()
             cls.created = True
         return cls.instance
+
+    def clear(self):
+        self.memory = MemoryDump()
 
     def get_by_id(self, id_: PythonId) -> MemoryObject:
         return self.memory.objects[id_]

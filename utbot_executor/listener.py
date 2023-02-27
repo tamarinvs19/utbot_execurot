@@ -1,23 +1,16 @@
 from enum import Enum
 import logging
 import socket
-import time
 
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer
 from utbot_executor.parser import parse_request, serialize_response
 from utbot_executor.executor import PythonExecutor
 
 logging.basicConfig(
-        filename='/home/vyacheslav/listener.log',
         format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
         datefmt='%m/%d/%Y %H:%M:%S',
         level=logging.INFO
         )
-
-
-class SocketMode(Enum):
-    COMMAND = 0  # 4 bytes
-    SIZE = 1     # 16 bytes
-    CONTENT = 2  # <= 2**128 bytes
 
 RECV_SIZE = 2048
 
@@ -28,6 +21,7 @@ class PythonExecuteServer:
             hostname: str,
             port: int,
             ):
+        logging.info('PythonExecutor is creating...')
         self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clientsocket.connect((hostname, port))
         self.executor = PythonExecutor()
@@ -44,7 +38,6 @@ class PythonExecuteServer:
 
         while True:
             command = self.clientsocket.recv(4)
-            logging.debug('Got command %s', command)
 
             if command == b'STOP':
                 break
@@ -66,14 +59,12 @@ class PythonExecuteServer:
 
                 request = parse_request(message_body.decode())
                 response = self.executor.run_function(request)
-                logging.debug('Got response')
                 serialized_response = serialize_response(response)
-                logging.debug('Serialized response')
+                PythonSerializer().clear()
 
                 bytes_data = serialized_response.encode()
                 response_size = str(len(bytes_data))
                 self.clientsocket.send(response_size.encode() + b'\n')
-                logging.debug('Sent size: %s', response_size)
 
                 sended_size = 0
                 while len(bytes_data) > sended_size:

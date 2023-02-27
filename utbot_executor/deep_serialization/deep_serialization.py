@@ -1,9 +1,9 @@
 import json
 from typing import Any, Dict, Tuple, List
 
-from deep_serialization.memory_objects import PythonSerializer
-from deep_serialization.json_converter import MemoryDumpEncoder, deserialize_memory_objects, DumpLoader
-from deep_serialization.utils import PythonId
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer
+from utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder, deserialize_memory_objects, DumpLoader
+from utbot_executor.deep_serialization.utils import PythonId
 
 
 def serialize_object(obj: Any) -> Tuple[str, str]:
@@ -39,5 +39,4 @@ def deserialize_objects(ids: List[str], memory: str, imports: List[str]) -> Dict
 
     memory_dump = deserialize_memory_objects(memory)
     loader = DumpLoader(memory_dump)
-    loader.add_imports(imports)
     return {python_id: loader.load_object(PythonId(python_id)) for python_id in ids}

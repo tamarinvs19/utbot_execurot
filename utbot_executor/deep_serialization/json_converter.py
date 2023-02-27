@@ -2,7 +2,7 @@ import importlib
 import json
 import sys
 from typing import Dict, Iterable, List, Optional, Set, Union
-from deep_serialization.memory_objects import (
+from utbot_executor.deep_serialization.memory_objects import (
     MemoryObject,
     ReprMemoryObject,
     ListMemoryObject,
@@ -10,7 +10,7 @@ from deep_serialization.memory_objects import (
     ReduceMemoryObject,
     MemoryDump
 )
-from deep_serialization.utils import PythonId
+from utbot_executor.deep_serialization.utils import PythonId
 
 
 class MemoryObjectEncoder(json.JSONEncoder):

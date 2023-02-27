@@ -11,7 +11,6 @@ class ExecutionRequest:
     syspaths: list[str]
     arguments_ids: list[str]
     serialized_memory: str
-    coverage_db: str
     filepath: str
 
 
@@ -46,7 +45,6 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
             'syspaths',
             'argumentsIds',
             'serializedMemory',
-            'coverageDB',
             'filepath'
             }:
         return ExecutionRequest(
@@ -56,7 +54,6 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
                 dct['syspaths'],
                 dct['argumentsIds'],
                 dct['serializedMemory'],
-                dct['coverageDB'],
                 dct['filepath'],
                 )
     return dct

@@ -1,9 +1,10 @@
 from enum import Enum
 import logging
 import socket
+import traceback
 
 from utbot_executor.deep_serialization.memory_objects import PythonSerializer
-from utbot_executor.parser import parse_request, serialize_response
+from utbot_executor.parser import parse_request, serialize_response, ExecutionFailResponse
 from utbot_executor.executor import PythonExecutor
 
 
@@ -52,13 +53,28 @@ class PythonExecuteServer:
                         message_size,
                     )
 
-                request = parse_request(message_body.decode())
-                response = self.executor.run_function(request)
-                serialized_response = serialize_response(response)
-                PythonSerializer().clear()
+                try:
+                    request = parse_request(message_body.decode())
+                    logging.debug('Parsed request: %s', request)
+                    response = self.executor.run_function(request)
+                except Exception as ex:
+                    response = ExecutionFailResponse('fail', traceback.format_exc())
+
+                logging.debug('Response: %s', response)
+
+                try:
+                    serialized_response = serialize_response(response)
+                except Exception as ex:
+                    serialized_response = serialize_response(ExecutionFailResponse('fail', ''))
+                finally:
+                    PythonSerializer().clear()
+
+                logging.debug('Serialized response: %s', serialized_response)
 
                 bytes_data = serialized_response.encode()
+                logging.debug('Encoded response: %s', bytes_data)
                 response_size = str(len(bytes_data))
+                    
                 self.clientsocket.send(response_size.encode() + b'\n')
 
                 sended_size = 0

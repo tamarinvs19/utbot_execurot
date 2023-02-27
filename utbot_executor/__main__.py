@@ -16,11 +16,19 @@ if __name__ == '__main__':
     parser.add_argument('hostname')
     parser.add_argument('port')
     parser.add_argument('logfile')
+    parser.add_argument(
+            'loglevel',
+            choices=["DEBUG", "INFO", "ERROR"],
+            default="ERROR",
+            required=False,
+            )
     args = parser.parse_args()
+
+    loglevel = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "ERROR": logging.ERROR}[args.loglevel]
     logging.basicConfig(
             filename=args.logfile,
             format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
             datefmt='%m/%d/%Y %H:%M:%S',
-            level=logging.DEBUG
+            level=loglevel,
             )
     main(args.hostname, int(args.port))

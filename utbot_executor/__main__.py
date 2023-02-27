@@ -14,13 +14,12 @@ if __name__ == '__main__':
         description = 'Listen socket stream and execute function value',
         )
     parser.add_argument('hostname')
-    parser.add_argument('port')
-    parser.add_argument('logfile')
+    parser.add_argument('port', type=int)
+    parser.add_argument('--logfile', default=None)
     parser.add_argument(
-            'loglevel',
+            '--loglevel',
             choices=["DEBUG", "INFO", "ERROR"],
             default="ERROR",
-            required=False,
             )
     args = parser.parse_args()
 
@@ -31,4 +30,4 @@ if __name__ == '__main__':
             datefmt='%m/%d/%Y %H:%M:%S',
             level=loglevel,
             )
-    main(args.hostname, int(args.port))
+    main(args.hostname, args.port)

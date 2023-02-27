@@ -1,5 +1,6 @@
 from enum import Enum
 import logging
+import os
 import socket
 import traceback
 
@@ -40,13 +41,14 @@ class PythonExecuteServer:
             if command == b'DATA':
                 message_size = int(self.clientsocket.recv(16).decode())
                 logging.debug('Got message size: %d bytes', message_size)
-                message_body = b''
+                message_body = bytearray()
 
                 while len(message_body) < message_size:
                     message = self.clientsocket.recv(
                             min(RECV_SIZE, message_size - len(message_body))
                             )
                     message_body += message
+                    logging.debug('Message: %s, size: %d', message, len(message))
                     logging.debug(
                         'Update content, current size: %d / %d bytes',
                         len(message_body),
@@ -76,8 +78,7 @@ class PythonExecuteServer:
                 bytes_data = serialized_response.encode()
                 logging.debug('Encoded response: %s', bytes_data)
                 response_size = str(len(bytes_data))
-                    
-                self.clientsocket.send(response_size.encode() + b'\n')
+                self.clientsocket.send((response_size + os.linesep).encode())
 
                 sended_size = 0
                 while len(bytes_data) > sended_size:

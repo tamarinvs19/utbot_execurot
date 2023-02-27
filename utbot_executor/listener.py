@@ -6,11 +6,6 @@ from utbot_executor.deep_serialization.memory_objects import PythonSerializer
 from utbot_executor.parser import parse_request, serialize_response
 from utbot_executor.executor import PythonExecutor
 
-logging.basicConfig(
-        format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
-        datefmt='%m/%d/%Y %H:%M:%S',
-        level=logging.INFO
-        )
 
 RECV_SIZE = 2048
 

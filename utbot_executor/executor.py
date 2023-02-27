@@ -14,12 +14,6 @@ from utbot_executor.deep_serialization.utils import PythonId
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout
 
-logging.basicConfig(
-        format='%(asctime)s | %(levelname)s | %(funcName)s - %(message)s',
-        datefmt='%m/%d/%Y %H:%M:%S',
-        level=logging.INFO
-        )
-
 
 class PythonExecutor:
     def add_syspaths(self, syspaths: Iterable[str]):

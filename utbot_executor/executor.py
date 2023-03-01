@@ -9,7 +9,7 @@ import coverage
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
-from utbot_executor.deep_serialization.utils import PythonId
+from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
 
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout
@@ -34,7 +34,7 @@ class PythonExecutor:
         self.add_syspaths(request.syspaths)
         self.add_imports(request.imports)
         try:
-            function = getattr(
+            function = getattr_by_path(
                     importlib.import_module(request.function_module),
                     request.function_name
                     )

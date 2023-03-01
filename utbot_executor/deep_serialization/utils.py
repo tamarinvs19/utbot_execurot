@@ -1,3 +1,4 @@
+import pickle
 from typing import Any, NewType
 
 PythonId = NewType('PythonId', str)
@@ -34,6 +35,8 @@ def has_reduce(py_object: object) -> bool:
         return True
     except TypeError:
         return False
+    except pickle.PicklingError:
+        return False
 
 
 def get_repr(py_object: object) -> str:
@@ -50,3 +53,11 @@ def get_repr(py_object: object) -> str:
     if isinstance(py_object, complex):
         return f"complex(real={get_repr(py_object.real)}, imag={get_repr(py_object.imag)})"
     return repr(py_object)
+
+
+def getattr_by_path(py_object: object, path: str) -> object:
+    current_object = py_object
+    for layer in path.split("."):
+        current_object = getattr(current_object, layer)
+    return current_object
+        

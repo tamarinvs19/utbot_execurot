@@ -23,18 +23,20 @@ class PythonExecutor:
 
     def add_imports(self, imports: Iterable[str]):
         for module in imports:
-            module_name = module.split('.')[0]
-            if module_name not in globals():
-                globals()[module_name] = importlib.import_module(module)
+            for i in range(1, module.count('.') + 2):
+                submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])
+                globals()[submodule_name] = importlib.import_module(submodule_name)
 
     def run_function(self, request: ExecutionRequest) -> ExecutionResponse:
-        logging.debug("Prepare to run function %s", request.function_name)
+        logging.debug("Prepare to run function `%s`", request.function_name)
         memory_dump = deserialize_memory_objects(request.serialized_memory)
         loader = DumpLoader(memory_dump)
         self.add_syspaths(request.syspaths)
         self.add_imports(request.imports)
+        loader.add_syspaths(request.syspaths)
+        loader.add_imports(request.imports)
         try:
-            function = getattr_by_path(
+            function: Callable = getattr_by_path(
                     importlib.import_module(request.function_module),
                     request.function_name
                     )

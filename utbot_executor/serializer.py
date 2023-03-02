@@ -2,6 +2,8 @@ from itertools import zip_longest
 import pickle
 from typing import Dict
 
+import utbot_executor.deep_serialization.utils
+
 
 class PythonTreeSerializer:
     class MemoryObj:
@@ -16,25 +18,6 @@ class PythonTreeSerializer:
 
     def memory_view(self):
         return ' | '.join(f'{id_}: {obj.deserialized_obj}' for id_, obj in self.memory.items())
-
-    @staticmethod
-    def get_type(py_object):
-        if py_object is None:
-            return 'types.NoneType'
-        module = type(py_object).__module__
-        return '{module}.{name}'.format(
-            module=module,
-            name=type(py_object).__name__,
-        )
-
-    @staticmethod
-    def get_type_name(type_):
-        if type_ is None:
-            return 'types.NoneType'
-        return '{module}.{name}'.format(
-            module=type_.__module__,
-            name=type_.__name__,
-        )
 
     @staticmethod
     def has_reduce(py_object) -> bool:
@@ -66,14 +49,14 @@ class PythonTreeSerializer:
             )
         ]
 
-        constructor = PythonTreeSerializer.get_type_name(reduce_value[0])
+        constructor = utbot_executor.deep_serialization.utils.get_type_name(reduce_value[0])
         args, deserialized_args = PythonTreeSerializer.unzip_list([
             self.serialize(arg)
             for arg in reduce_value[1]
         ])
         json_obj = {
             'id': id_,
-            'type': PythonTreeSerializer.get_type(py_object),
+            'type': utbot_executor.deep_serialization.utils.get_type(py_object),
             'constructor': constructor,
             'args': args,
             'state': [],
@@ -113,7 +96,7 @@ class PythonTreeSerializer:
         return id_, deserialized_obj
 
     def serialize(self, py_object):
-        type_ = PythonTreeSerializer.get_type(py_object)
+        type_ = utbot_executor.deep_serialization.utils.get_type(py_object)
         id_ = id(py_object)
         skip_comparable = False
         comparable = True
@@ -128,23 +111,23 @@ class PythonTreeSerializer:
                 self.memory[id_].comparable = py_object == deserialized_obj
                 skip_comparable = False
         elif isinstance(py_object, type):
-            value = PythonTreeSerializer.get_type_name(py_object)
+            value = utbot_executor.deep_serialization.utils.get_type_name(py_object)
             strategy = 'repr'
             deserialized_obj = py_object
-        elif any(type(py_object) == t for t in (list, set, tuple)):
+        elif isinstance(py_object, (list, set, tuple)):  # any(type(py_object) == t for t in (list, set, tuple)):
             elements = [
                 self.serialize(element) for element in py_object
             ]
             value, deserialized_obj = PythonTreeSerializer.unzip_list(elements, type(py_object))
-            comparable = all([element['comparable'] for element in value])
+            comparable = all(element['comparable'] for element in value)
             strategy = 'generic'
-        elif type(py_object) == dict:
+        elif isinstance(py_object, dict):  # type(py_object) == dict:
             elements = [
                 [self.serialize(key), self.serialize(value)]
                 for key, value in py_object.items()
             ]
             value, deserialized_obj = PythonTreeSerializer.unzip_dict(elements)
-            comparable = all([element[1]['comparable'] for element in value])
+            comparable = all(element[1]['comparable'] for element in value)
             strategy = 'generic'
         elif PythonTreeSerializer.has_reduce(py_object):
             value, deserialized_obj = self.get_reduce(py_object)

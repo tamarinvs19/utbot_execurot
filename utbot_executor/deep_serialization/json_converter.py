@@ -1,5 +1,6 @@
 import importlib
 import json
+import logging
 import sys
 from typing import Dict, Iterable, List, Optional, Set, Union
 from utbot_executor.deep_serialization.memory_objects import (
@@ -87,6 +88,17 @@ class DumpLoader:
         self.memory_dump = memory_dump
         self.memory: Dict[PythonId, object] = {}  # key is new id, value is real object
 
+    def add_syspaths(self, syspaths: Iterable[str]):
+        for path in syspaths:
+            if path not in sys.path:
+                sys.path.append(path)
+
+    def add_imports(self, imports: Iterable[str]):
+        for module in imports:
+            for i in range(1, module.count('.') + 2):
+                submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])
+                globals()[submodule_name] = importlib.import_module(submodule_name)
+
     def load_object(self, python_id: PythonId) -> object:
         if python_id in self.memory:
             return self.memory[python_id]
@@ -96,7 +108,12 @@ class DumpLoader:
         if isinstance(dump_object, ReprMemoryObject):
             real_object = eval(dump_object.value)
         elif isinstance(dump_object, ListMemoryObject):
-            real_object = [self.load_object(item) for item in dump_object.items]
+            if dump_object.kind == 'builtins.set':
+                real_object = set(self.load_object(item) for item in dump_object.items)
+            elif dump_object.kind == 'builtins.tuple':
+                real_object = tuple(self.load_object(item) for item in dump_object.items)
+            else:
+                real_object = [self.load_object(item) for item in dump_object.items]
         elif isinstance(dump_object, DictMemoryObject):
             real_object = {
                     self.load_object(key): self.load_object(value)

@@ -2,7 +2,6 @@
 import inspect
 import importlib
 import logging
-import resource
 import sys
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
@@ -58,7 +57,6 @@ class PythonExecutor:
             return ExecutionFailResponse("fail", traceback.format_exc())
 
         try:
-            resource.setrlimit(resource.RLIMIT_AS, (10**8, 10**8))
             value = run_calculate_function_value(
                     function,
                     args,

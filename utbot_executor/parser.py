@@ -1,15 +1,15 @@
 import dataclasses
 import json
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 
 @dataclasses.dataclass
 class ExecutionRequest:
     function_name: str
     function_module: str
-    imports: list[str]
-    syspaths: list[str]
-    arguments_ids: list[str]
+    imports: List[str]
+    syspaths: List[str]
+    arguments_ids: List[str]
     serialized_memory: str
     filepath: str
 
@@ -22,12 +22,12 @@ class ExecutionResponse:
 class ExecutionSuccessResponse(ExecutionResponse):
     status: str
     is_exception: bool
-    statements: list[int]
-    missed_statements: list[int]
+    statements: List[int]
+    missed_statements: List[int]
     state_before: str
     state_after: str
-    args_ids: list[str]
-    kwargs_ids: list[str]
+    args_ids: List[str]
+    kwargs_ids: List[str]
     result_id: str
 
 

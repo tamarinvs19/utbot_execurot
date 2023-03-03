@@ -60,7 +60,7 @@ class PythonExecuteServer:
                     logging.debug('Parsed request: %s', request)
                     response = self.executor.run_function(request)
                 except Exception as ex:
-                    logging.debug('Message: %s', message_body)
+                    logging.debug('Exception: %s', traceback.format_exc())
                     response = ExecutionFailResponse('fail', traceback.format_exc())
 
                 logging.debug('Response: %s', response)

@@ -2,6 +2,7 @@
 import inspect
 import importlib
 import logging
+import resource
 import sys
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
@@ -29,12 +30,22 @@ class PythonExecutor:
 
     def run_function(self, request: ExecutionRequest) -> ExecutionResponse:
         logging.debug("Prepare to run function `%s`", request.function_name)
-        memory_dump = deserialize_memory_objects(request.serialized_memory)
-        loader = DumpLoader(memory_dump)
-        self.add_syspaths(request.syspaths)
-        self.add_imports(request.imports)
-        loader.add_syspaths(request.syspaths)
-        loader.add_imports(request.imports)
+        try:
+            memory_dump = deserialize_memory_objects(request.serialized_memory)
+            loader = DumpLoader(memory_dump)
+        except Exception as ex:
+            logging.debug("Error \n%s", traceback.format_exc())
+            return ExecutionFailResponse("fail", traceback.format_exc())
+
+        try:
+            self.add_syspaths(request.syspaths)
+            self.add_imports(request.imports)
+            loader.add_syspaths(request.syspaths)
+            loader.add_imports(request.imports)
+        except Exception as ex:
+            logging.debug("Error \n%s", traceback.format_exc())
+            return ExecutionFailResponse("fail", traceback.format_exc())
+
         try:
             function: Callable = getattr_by_path(
                     importlib.import_module(request.function_module),
@@ -45,13 +56,18 @@ class PythonExecutor:
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
-        value = run_calculate_function_value(
-                function,
-                args,
-                kwargs,
-                request.filepath
-                )
-        logging.debug("Function execution: done")
+
+        try:
+            resource.setrlimit(resource.RLIMIT_AS, (10**8, 10**8))
+            value = run_calculate_function_value(
+                    function,
+                    args,
+                    kwargs,
+                    request.filepath
+                    )
+        except Exception as ex:
+            logging.debug("Error \n%s", traceback.format_exc())
+            return ExecutionFailResponse("fail", traceback.format_exc())
         return value
 
 

@@ -21,6 +21,7 @@ class MemoryObjectEncoder(json.JSONEncoder):
                 'strategy': o.strategy,
                 'id': o.id_value(),
                 'kind': o.kind,
+                # 'module': o.module,
                 'comparable': o.comparable,
             }
             if isinstance(o, ReprMemoryObject):

@@ -1,14 +1,16 @@
 from __future__ import annotations
 from itertools import zip_longest
+import logging
 import pickle
 from typing import Any, Dict, List, Optional, Type
 
-from utbot_executor.deep_serialization.utils import PythonId, get_type_name, get_type, has_reduce, check_comparability, get_repr
+from utbot_executor.deep_serialization.utils import PythonId, get_type_name, get_type, has_reduce, check_comparability, get_repr, has_repr
 
 
 class MemoryObject:
     strategy: str
     kind: str
+    # module: str
     comparable: bool
     is_draft: bool
     deserialized_obj: object
@@ -17,6 +19,7 @@ class MemoryObject:
     def __init__(self, obj: object) -> None:
         self.is_draft = True
         self.kind = get_type_name(obj) if isinstance(obj, type) else get_type(obj)
+        # self.module = obj.__module__ if isinstance(obj, type) else type(obj).__module__
         self.obj = obj
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
@@ -200,7 +203,9 @@ class ReduceMemoryObjectProvider(MemoryObjectProvider):
 class ReprMemoryObjectProvider(MemoryObjectProvider):
     @staticmethod
     def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
-        return ReprMemoryObject
+        if has_repr(obj):
+            return ReprMemoryObject
+        return None
 
 
 class MemoryDump:

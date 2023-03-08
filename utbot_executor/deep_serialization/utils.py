@@ -1,11 +1,20 @@
+import importlib
 import pickle
-from typing import Any, NewType
+from typing import NewType
 
 PythonId = NewType('PythonId', str)
 
 
 def check_comparability(py_object: object, deserialized_py_object: object) -> bool:
     return py_object == deserialized_py_object
+
+
+def get_module(py_object: object) -> str:
+    if py_object is None:
+        return "types"
+    if isinstance(py_object, type):
+        return py_object.__module__
+    return type(py_object).__module__
 
 
 def get_type(py_object: object) -> str:
@@ -59,22 +68,31 @@ def get_repr(py_object: object) -> str:
     return repr(py_object)
 
 
+def check_eval(py_object: object) -> bool:
+    module = get_module(py_object)
+    globals()[module] = importlib.import_module(module)
+    try:
+        eval(get_repr(py_object))
+        return True
+    except Exception:
+        return False
+
+
 def has_repr(py_object: object) -> bool:
     if isinstance(py_object, type):
         return True
+
+    if check_eval(py_object):
+        repr_value = get_repr(py_object)
+        evaluated = eval(repr_value)
+        return get_repr(evaluated) == repr_value
+
     try:
         pickle.dumps(py_object)
     except pickle.PicklingError:
         return False
 
-    try:
-        r = repr(py_object)
-        if not isinstance(py_object, str) and r.startswith('<') and r.endswith('>'):
-            return False
-    except Exception:
-        return False
-
-    return True
+    return False
 
 
 def getattr_by_path(py_object: object, path: str) -> object:

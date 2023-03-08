@@ -10,7 +10,7 @@ from utbot_executor.deep_serialization.utils import PythonId, get_type_name, get
 class MemoryObject:
     strategy: str
     kind: str
-    # module: str
+    module: str
     comparable: bool
     is_draft: bool
     deserialized_obj: object
@@ -19,7 +19,7 @@ class MemoryObject:
     def __init__(self, obj: object) -> None:
         self.is_draft = True
         self.kind = get_type_name(obj) if isinstance(obj, type) else get_type(obj)
-        # self.module = obj.__module__ if isinstance(obj, type) else type(obj).__module__
+        self.module = obj.__module__ if isinstance(obj, type) else type(obj).__module__
         self.obj = obj
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:

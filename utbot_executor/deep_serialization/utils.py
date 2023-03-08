@@ -79,18 +79,28 @@ def check_eval(py_object: object) -> bool:
 
 
 def has_repr(py_object: object) -> bool:
-    if isinstance(py_object, type):
+    reprable_types = [
+            None,
+            int,
+            float,
+            bytes,
+            bytearray,
+            str,
+            # tuple,
+            # list,
+            # dict,
+            # set,
+            # frozenset,
+            type,
+        ]
+    if type(py_object) in reprable_types:
         return True
 
     if check_eval(py_object):
         repr_value = get_repr(py_object)
         evaluated = eval(repr_value)
-        return get_repr(evaluated) == repr_value
-
-    try:
-        pickle.dumps(py_object)
-    except pickle.PicklingError:
-        return False
+        if get_repr(evaluated) == repr_value:
+            return True
 
     return False
 

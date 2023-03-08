@@ -80,7 +80,7 @@ def check_eval(py_object: object) -> bool:
 
 def has_repr(py_object: object) -> bool:
     reprable_types = [
-            None,
+            type(None),
             int,
             float,
             bytes,

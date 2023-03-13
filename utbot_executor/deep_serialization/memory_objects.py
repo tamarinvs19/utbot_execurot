@@ -1,10 +1,9 @@
 from __future__ import annotations
 from itertools import zip_longest
-import logging
 import pickle
 from typing import Any, Dict, List, Optional, Type
 
-from utbot_executor.deep_serialization.utils import PythonId, get_type_name, get_type, has_reduce, check_comparability, get_repr, has_repr
+from utbot_executor.deep_serialization.utils import PythonId, get_kind, get_type_name, get_type, has_reduce, check_comparability, get_repr, has_repr
 
 
 class MemoryObject:
@@ -18,8 +17,9 @@ class MemoryObject:
 
     def __init__(self, obj: object) -> None:
         self.is_draft = True
-        self.kind = get_type_name(obj) if isinstance(obj, type) else get_type(obj)
-        self.module = obj.__module__ if isinstance(obj, type) else type(obj).__module__
+        module, kind = get_kind(obj)
+        self.kind = kind
+        self.module = module
         self.obj = obj
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
@@ -40,6 +40,12 @@ class MemoryObject:
 
     def __str__(self) -> str:
         return str(self.obj)
+
+    @property
+    def qualname(self) -> str:
+        if self.module == "":
+            return f"{self.module}.{self.kind}"
+        return self.kind
 
 
 

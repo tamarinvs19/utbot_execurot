@@ -109,9 +109,9 @@ class DumpLoader:
         if isinstance(dump_object, ReprMemoryObject):
             real_object = eval(dump_object.value)
         elif isinstance(dump_object, ListMemoryObject):
-            if dump_object.kind == 'builtins.set':
+            if dump_object.qualname == 'builtins.set':
                 real_object = set(self.load_object(item) for item in dump_object.items)
-            elif dump_object.kind == 'builtins.tuple':
+            elif dump_object.qualname == 'builtins.tuple':
                 real_object = tuple(self.load_object(item) for item in dump_object.items)
             else:
                 real_object = [self.load_object(item) for item in dump_object.items]

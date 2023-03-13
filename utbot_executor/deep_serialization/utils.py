@@ -1,12 +1,25 @@
 import importlib
 import pickle
-from typing import NewType
+from typing import NewType, Tuple
 
 PythonId = NewType('PythonId', str)
 
 
 def check_comparability(py_object: object, deserialized_py_object: object) -> bool:
     return py_object == deserialized_py_object
+
+
+def get_kind(py_object: object) -> Tuple[str, str]:
+    """Get pair of module and name of type"""
+    if py_object is None:
+        return "types", "NoneType"
+    if callable(py_object):
+        return "typing", "Callable"
+    if isinstance(py_object, type):
+        return py_object.__module__, py_object.__qualname__
+    module = type(py_object).__module__
+    qualname = type(py_object).__qualname__
+    return module, qualname
 
 
 def get_module(py_object: object) -> str:

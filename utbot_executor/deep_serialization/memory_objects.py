@@ -41,7 +41,6 @@ class MemoryObject:
 
     @property
     def qualname(self) -> str:
-        if 
         if self.module == "":
             return f"{self.module}.{self.kind}"
         return self.kind

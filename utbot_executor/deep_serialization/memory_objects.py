@@ -17,9 +17,7 @@ class MemoryObject:
 
     def __init__(self, obj: object) -> None:
         self.is_draft = True
-        module, kind = get_kind(obj)
-        self.kind = kind
-        self.module = module
+        self.module, self.kind = get_kind(obj)
         self.obj = obj
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
@@ -43,10 +41,10 @@ class MemoryObject:
 
     @property
     def qualname(self) -> str:
+        if 
         if self.module == "":
             return f"{self.module}.{self.kind}"
         return self.kind
-
 
 
 class ReprMemoryObject(MemoryObject):

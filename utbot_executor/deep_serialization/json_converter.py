@@ -52,18 +52,21 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj = ReprMemoryObject.__new__(ReprMemoryObject)
             obj.value = dct['value']
             obj.kind = dct['kind']
+            obj.module = dct['module']
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'list':
             obj = ListMemoryObject.__new__(ListMemoryObject)
             obj.items = dct['items']
             obj.kind = dct['kind']
+            obj.module = dct['module']
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'dict':
             obj = DictMemoryObject.__new__(DictMemoryObject)
             obj.items = dct['items']
             obj.kind = dct['kind']
+            obj.module = dct['module']
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'reduce':
@@ -74,6 +77,7 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj.listitems = dct['listitems']
             obj.dictitems = dct['dictitems']
             obj.kind = dct['kind']
+            obj.module = dct['module']
             obj.comparable = dct['comparable']
             return obj
     return dct

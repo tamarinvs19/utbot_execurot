@@ -1,18 +1,19 @@
 """Python code executor for UnitTestBot"""
-import inspect
 import importlib
+import inspect
 import logging
 import sys
+import trace
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
-import coverage
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
-
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
-from utbot_executor.utils import suppress_stdout
+from utbot_executor.utils import suppress_stdout as __suppress_stdout
+
+__all__ = ['PythonExecutor']
 
 
 class PythonExecutor:
@@ -57,7 +58,7 @@ class PythonExecutor:
             return ExecutionFailResponse("fail", traceback.format_exc())
 
         try:
-            value = run_calculate_function_value(
+            value = _run_calculate_function_value(
                     function,
                     args,
                     kwargs,
@@ -67,10 +68,6 @@ class PythonExecutor:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
         return value
-
-
-def __get_lines(start, end, lines):
-    return [x for x in lines if start < x < end]
 
 
 def _serialize_state(
@@ -92,7 +89,7 @@ def _serialize_state(
             )
 
 
-def run_calculate_function_value(
+def _run_calculate_function_value(
         function: Callable,
         args: List[Any],
         kwargs: Dict[str, Any],
@@ -105,25 +102,26 @@ def run_calculate_function_value(
     _, _, _, state_before = _serialize_state(args, kwargs)
 
     __is_exception = False
-    __cov = coverage.Coverage(
-        data_file=None,
+    (__sources, __start, ) = inspect.getsourcelines(function)
+    __end = __start + len(__sources)
+
+    __tracer = trace.Trace(
+        ignoredirs=[sys.prefix, sys.exec_prefix],
+        count=1,
+        trace=0,
     )
-    __cov.start()
     try:
-        with suppress_stdout():
-            __result = function(*args, **kwargs)
+        with __suppress_stdout():
+            __result = __tracer.runfunc(function, *args, **kwargs)
     except Exception as __exception:
         __result = __exception
         __is_exception = True
-    __cov.stop()
 
-    (__sources, __start, ) = inspect.getsourcelines(function)
-    __end = __start + len(__sources)
-    (_, __stmts, _, __missed, _, ) = __cov.analysis2(fullpath)
-    __cov.erase()
-    __stmts_filtered = __get_lines(__start, __end, __stmts)
+    __covered_lines = [x for x in __tracer.results().counts if x[0] == fullpath]
+    __stmts = [x[1] for x in __covered_lines]
+    __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
-    __missed_filtered = __get_lines(__start, __end, __missed)
+    __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]
 
     args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)
 

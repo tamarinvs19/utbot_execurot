@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "utbot-executor"
-version = "0.200.1"
+version = "0.200.2"
 description = ""
 authors = ["Vyacheslav Tamarin <vyacheslav.tamarin@yandex.ru>"]
 readme = "README.md"
@@ -8,7 +8,6 @@ packages = [{include = "utbot_executor"}]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-coverage = "^7.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"

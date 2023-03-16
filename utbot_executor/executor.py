@@ -3,6 +3,7 @@ import inspect
 import importlib
 import logging
 import sys
+import trace
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
 import coverage
@@ -111,26 +112,29 @@ def run_calculate_function_value(
     _, _, _, state_before = _serialize_state(args, kwargs)
 
     __is_exception = False
-    __cov = coverage.Coverage(
-        data_file=None,
+
+    (__sources, __start, ) = inspect.getsourcelines(function)
+    __end = __start + len(__sources)
+
+    __tracer = trace.Trace(
+        ignoredirs=[sys.prefix, sys.exec_prefix],
+        count=1,
+        trace=0,
     )
-    __cov.start()
+
     try:
         with suppress_stdout():
             __result = function(*args, **kwargs)
     except Exception as __exception:
         __result = __exception
         __is_exception = True
-    __cov.stop()
     logging.debug("Function call finished: %s", __result)
 
-    (__sources, __start, ) = inspect.getsourcelines(function)
-    __end = __start + len(__sources)
-    (_, __stmts, _, __missed, _, ) = __cov.analysis2(fullpath)
-    __cov.erase()
-    __stmts_filtered = __get_lines(__start, __end, __stmts)
+    __covered_lines = [x for x in __tracer.results().counts if x[0] == fullpath]
+    __stmts = [x[1] for x in __covered_lines]
+    __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
-    __missed_filtered = __get_lines(__start, __end, __missed)
+    __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]
     logging.debug("Covered lines: %s", __stmts_filtered)
     logging.debug("Missed lines: %s", __missed_filtered)
 

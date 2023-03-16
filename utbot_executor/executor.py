@@ -35,6 +35,7 @@ class PythonExecutor:
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
+        logging.debug("Dump loader have been created")
 
         try:
             self.add_syspaths(request.syspaths)
@@ -44,17 +45,21 @@ class PythonExecutor:
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
+        logging.debug("Imports have been added")
 
         try:
             function: Callable = getattr_by_path(
                     importlib.import_module(request.function_module),
                     request.function_name
                     )
+            logging.debug("Function initialized")
             args = [loader.load_object(PythonId(arg_id)) for arg_id in request.arguments_ids]
+            logging.debug("Arguments: %s", args)
             kwargs: dict[str, Any] = {}
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
+        logging.debug("Arguments have been created")
 
         try:
             value = run_calculate_function_value(
@@ -66,6 +71,7 @@ class PythonExecutor:
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
+        logging.debug("Value have been calculated: %s", value)
         return value
 
 
@@ -116,6 +122,7 @@ def run_calculate_function_value(
         __result = __exception
         __is_exception = True
     __cov.stop()
+    logging.debug("Function call finished: %s", __result)
 
     (__sources, __start, ) = inspect.getsourcelines(function)
     __end = __start + len(__sources)
@@ -124,6 +131,8 @@ def run_calculate_function_value(
     __stmts_filtered = __get_lines(__start, __end, __stmts)
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = __get_lines(__start, __end, __missed)
+    logging.debug("Covered lines: %s", __stmts_filtered)
+    logging.debug("Missed lines: %s", __missed_filtered)
 
     args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)
 

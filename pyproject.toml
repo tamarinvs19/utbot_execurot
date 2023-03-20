@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "utbot-executor"
-version = "0.200.4"
+version = "0.200.5"
 description = ""
 authors = ["Vyacheslav Tamarin <vyacheslav.tamarin@yandex.ru>"]
 readme = "README.md"

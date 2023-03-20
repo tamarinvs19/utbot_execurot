@@ -26,7 +26,9 @@ class PythonExecutor:
         for module in imports:
             for i in range(1, module.count('.') + 2):
                 submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])
-                globals()[submodule_name] = importlib.import_module(submodule_name)
+                logging.debug("Submodule #%d: %s", i, submodule_name)
+                if submodule_name not in globals():
+                    globals()[submodule_name] = importlib.import_module(submodule_name)
 
     def run_function(self, request: ExecutionRequest) -> ExecutionResponse:
         logging.debug("Prepare to run function `%s`", request.function_name)

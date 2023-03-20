@@ -39,6 +39,8 @@ class PythonExecutor:
         logging.debug("Dump loader have been created")
 
         try:
+            logging.debug("Imports: %s", request.imports)
+            logging.debug("Syspaths: %s", request.syspaths)
             self.add_syspaths(request.syspaths)
             self.add_imports(request.imports)
             loader.add_syspaths(request.syspaths)
@@ -49,10 +51,15 @@ class PythonExecutor:
         logging.debug("Imports have been added")
 
         try:
-            function: Callable = getattr_by_path(
+            function = getattr_by_path(
                     importlib.import_module(request.function_module),
                     request.function_name
                     )
+            if not callable(function):
+                return ExecutionFailResponse(
+                        "fail",
+                        f"Invalid function path {request.function_module}.{request.function_name}"
+                        )
             logging.debug("Function initialized")
             args = [loader.load_object(PythonId(arg_id)) for arg_id in request.arguments_ids]
             logging.debug("Arguments: %s", args)
@@ -130,8 +137,8 @@ def run_calculate_function_value(
         __is_exception = True
     logging.debug("Function call finished: %s", __result)
 
-    __covered_lines = [x for x in __tracer.results().counts if x[0] == fullpath]
-    __stmts = [x[1] for x in __covered_lines]
+    __covered_lines = [x[1] for x in __tracer.counts if x[0] == fullpath]
+    __stmts = [x for x in __covered_lines]
     __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]

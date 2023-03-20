@@ -48,13 +48,9 @@ class PythonExecutor:
             logging.debug("Imports: %s", request.imports)
             logging.debug("Syspaths: %s", request.syspaths)
             self.add_syspaths(request.syspaths)
-            logging.debug("Current syspaths: %s", sys.path)
             self.add_imports(request.imports)
-            logging.debug("Current globals: %s", globals())
             loader.add_syspaths(request.syspaths)
-            logging.debug("Current syspaths: %s", sys.path)
             loader.add_imports(request.imports)
-            logging.debug("Current globals: %s", globals())
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
@@ -141,7 +137,7 @@ def run_calculate_function_value(
 
     try:
         with suppress_stdout():
-            __result = function(*args, **kwargs)
+            __result = __tracer.runfunc(function, *args, **kwargs)
     except Exception as __exception:
         __result = __exception
         __is_exception = True
@@ -152,7 +148,7 @@ def run_calculate_function_value(
     __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]
-    logging.debug("Covered lines: %s", __stmts_filtered)
+    logging.debug("Covered lines: %s", __stmts_filtered_with_def)
     logging.debug("Missed lines: %s", __missed_filtered)
 
     args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)

@@ -42,9 +42,13 @@ class PythonExecutor:
             logging.debug("Imports: %s", request.imports)
             logging.debug("Syspaths: %s", request.syspaths)
             self.add_syspaths(request.syspaths)
+            logging.debug("Current syspaths: %s", sys.path)
             self.add_imports(request.imports)
+            logging.debug("Current globals: %s", globals())
             loader.add_syspaths(request.syspaths)
+            logging.debug("Current syspaths: %s", sys.path)
             loader.add_imports(request.imports)
+            logging.debug("Current globals: %s", globals())
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())

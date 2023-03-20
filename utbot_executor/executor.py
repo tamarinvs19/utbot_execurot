@@ -28,7 +28,11 @@ class PythonExecutor:
                 submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])
                 logging.debug("Submodule #%d: %s", i, submodule_name)
                 if submodule_name not in globals():
-                    globals()[submodule_name] = importlib.import_module(submodule_name)
+                    try:
+                        globals()[submodule_name] = importlib.import_module(submodule_name)
+                    except ModuleNotFoundError:
+                        logging.warning("Import submodule %s failed", submodule_name)
+                logging.debug("Submodule #%d: OK", i)
 
     def run_function(self, request: ExecutionRequest) -> ExecutionResponse:
         logging.debug("Prepare to run function `%s`", request.function_name)

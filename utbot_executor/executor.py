@@ -6,8 +6,7 @@ import pathlib
 import sys
 import trace
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Set, Tuple
-import coverage
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
@@ -131,7 +130,6 @@ def run_calculate_function_value(
     __end = __start + len(__sources)
 
     __tracer = trace.Trace(
-        # ignoredirs=[sys.prefix, sys.exec_prefix],
         count=1,
         trace=0,
     )
@@ -144,10 +142,9 @@ def run_calculate_function_value(
         __is_exception = True
     logging.debug("Function call finished: %s", __result)
 
-    logging.debug("Fullpath: %s", fullpath)
-    __covered_lines = [x[1] for x in __tracer.counts if pathlib.PurePath(x[0]) == pathlib.PurePath(fullpath)]
     logging.debug("Coverage: %s", __tracer.counts)
-    __stmts = [x for x in __covered_lines]
+    logging.debug("Fullpath: %s", fullpath)
+    __stmts = [x[1] for x in __tracer.counts if pathlib.PurePath(x[0]) == pathlib.PurePath(fullpath)]
     __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
     __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]

@@ -2,6 +2,7 @@
 import inspect
 import importlib
 import logging
+import pathlib
 import sys
 import trace
 import traceback
@@ -144,7 +145,7 @@ def run_calculate_function_value(
     logging.debug("Function call finished: %s", __result)
 
     logging.debug("Fullpath: %s", fullpath)
-    __covered_lines = [x[1] for x in __tracer.counts if x[0] == fullpath]
+    __covered_lines = [x[1] for x in __tracer.counts if pathlib.PurePath(x[0]) == pathlib.PurePath(fullpath)]
     logging.debug("Coverage: %s", __tracer.counts)
     __stmts = [x for x in __covered_lines]
     __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]

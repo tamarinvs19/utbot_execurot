@@ -145,7 +145,7 @@ def _run_calculate_function_value(
     __stmts = [x[1] for x in __tracer.counts if pathlib.PurePath(x[0]) == module_path]
     __stmts_filtered = [x for x in range(__start, __end) if x in __stmts]
     __stmts_filtered_with_def = [__start] + __stmts_filtered
-    __missed_filtered = [x for x in range(__start, __end) if x not in __stmts]
+    __missed_filtered = [x for x in range(__start, __end) if x not in __stmts_filtered_with_def]
     logging.debug("Covered lines: %s", __stmts_filtered_with_def)
     logging.debug("Missed lines: %s", __missed_filtered)
 

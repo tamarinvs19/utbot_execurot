@@ -96,7 +96,7 @@ class DumpLoader:
     def add_syspaths(self, syspaths: Iterable[str]):
         for path in syspaths:
             if path not in sys.path:
-                sys.path.append(path)
+                sys.path.insert(0, path)
 
     def add_imports(self, imports: Iterable[str]):
         for module in imports:

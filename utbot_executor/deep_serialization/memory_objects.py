@@ -150,7 +150,7 @@ class ReduceMemoryObject(MemoryObject):
 
         self.constructor = get_type_name(self.reduce_value[0])
 
-        is_reconstructor = self.reduce_value[0] == 'copyreg._reconstructor'
+        is_reconstructor = self.constructor == 'copyreg._reconstructor'
         is_user_type = hasattr(self.reduce_value[1][1], '__class__') and self.reduce_value[1][1].__class__ == object and self.reduce_value[1][2] is None
 
         if is_reconstructor and is_user_type:

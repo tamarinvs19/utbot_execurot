@@ -1,3 +1,5 @@
+from __future__ import annotations
+import dataclasses
 import importlib
 import pickle
 from typing import NewType, Tuple
@@ -5,50 +7,44 @@ from typing import NewType, Tuple
 PythonId = NewType('PythonId', str)
 
 
+@dataclasses.dataclass
+class TypeInfo:
+    module: str
+    kind: str
+
+    @property
+    def qualname(self):
+        if self.module == "":
+            return f"{self.module}.{self.kind}"
+        return self.kind
+
+    @staticmethod
+    def from_str(representation: str) -> TypeInfo:
+        if '.' in representation:
+            return TypeInfo(representation.rsplit('.', 1)[0], representation.rsplit('.', 1)[1])
+        return TypeInfo('', representation)
+
+    def __str__(self):
+        if self.module != '':
+            return f'{self.module}.{self.kind}'
+        return self.kind
+
+
 def check_comparability(py_object: object, deserialized_py_object: object) -> bool:
     return py_object == deserialized_py_object
 
 
-def get_kind(py_object: object) -> Tuple[str, str]:
-    """Get pair of module and name of type"""
+def get_kind(py_object: object) -> TypeInfo:
+    """Get module and name of type"""
     if py_object is None:
-        return "types", "NoneType"
-    if callable(py_object):
-        return "typing", "Callable"
+        return TypeInfo("types", "NoneType")
     if isinstance(py_object, type):
-        return py_object.__module__, py_object.__qualname__
+        return TypeInfo(py_object.__module__, py_object.__qualname__)
+    if callable(py_object):
+        return TypeInfo("typing", "Callable")
     module = type(py_object).__module__
     qualname = type(py_object).__qualname__
-    return module, qualname
-
-
-def get_module(py_object: object) -> str:
-    if py_object is None:
-        return "types"
-    if isinstance(py_object, type):
-        return py_object.__module__
-    return type(py_object).__module__
-
-
-def get_type(py_object: object) -> str:
-    if py_object is None:
-        return 'types.NoneType'
-    if callable(py_object):
-        return 'typing.Callable'
-    module = type(py_object).__module__
-    return '{module}.{name}'.format(
-        module=module,
-        name=type(py_object).__qualname__,
-    )
-
-
-def get_type_name(type_: type) -> str:
-    if type_ is None:
-        return 'types.NoneType'
-    return '{module}.{name}'.format(
-        module=type_.__module__,
-        name=type_.__qualname__,
-    )
+    return TypeInfo(module, qualname)
 
 
 def has_reduce(py_object: object) -> bool:
@@ -67,7 +63,7 @@ def has_reduce(py_object: object) -> bool:
 
 def get_repr(py_object: object) -> str:
     if isinstance(py_object, type):
-        return get_type_name(py_object)
+        return str(get_kind(py_object))
     if isinstance(py_object, float):
         if repr(py_object) == 'nan':
             return "float('nan')"
@@ -82,7 +78,7 @@ def get_repr(py_object: object) -> str:
 
 
 def check_eval(py_object: object) -> bool:
-    module = get_module(py_object)
+    module = get_kind(py_object).module
     globals()[module] = importlib.import_module(module)
     try:
         eval(get_repr(py_object))

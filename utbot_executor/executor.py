@@ -18,12 +18,14 @@ __all__ = ['PythonExecutor']
 
 
 class PythonExecutor:
-    def add_syspaths(self, syspaths: Iterable[str]):
+    @staticmethod
+    def add_syspaths(syspaths: Iterable[str]):
         for path in syspaths:
             if path not in sys.path:
                 sys.path.insert(0, path)
 
-    def add_imports(self, imports: Iterable[str]):
+    @staticmethod
+    def add_imports(imports: Iterable[str]):
         for module in imports:
             for i in range(1, module.count('.') + 2):
                 submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])
@@ -40,7 +42,7 @@ class PythonExecutor:
         try:
             memory_dump = deserialize_memory_objects(request.serialized_memory)
             loader = DumpLoader(memory_dump)
-        except Exception as ex:
+        except Exception as _:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
         logging.debug("Dump loader have been created")

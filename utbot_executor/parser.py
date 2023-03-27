@@ -84,5 +84,6 @@ class ResponseEncoder(json.JSONEncoder):
             }
         return json.JSONEncoder.default(self, o)
 
+
 def serialize_response(response: ExecutionResponse) -> str:
     return json.dumps(response, cls=ResponseEncoder)

@@ -3,13 +3,12 @@ from itertools import zip_longest
 import pickle
 from typing import Any, Callable, Dict, List, Optional, Type
 
-from utbot_executor.deep_serialization.utils import PythonId, get_kind, get_type_name, get_type, has_reduce, check_comparability, get_repr, has_repr
+from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, has_repr, TypeInfo
 
 
 class MemoryObject:
     strategy: str
-    kind: str
-    module: str
+    typeinfo: TypeInfo
     comparable: bool
     is_draft: bool
     deserialized_obj: object
@@ -17,7 +16,7 @@ class MemoryObject:
 
     def __init__(self, obj: object) -> None:
         self.is_draft = True
-        self.module, self.kind = get_kind(obj)
+        self.typeinfo = get_kind(obj)
         self.obj = obj
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
@@ -34,16 +33,14 @@ class MemoryObject:
     def __repr__(self) -> str:
         if hasattr(self, 'obj'):
             return str(self.obj)
-        return self.kind
+        return str(self.typeinfo)
 
     def __str__(self) -> str:
         return str(self.obj)
 
     @property
     def qualname(self) -> str:
-        if self.module == "":
-            return f"{self.module}.{self.kind}"
-        return self.kind
+        return self.typeinfo.qualname
 
 
 class ReprMemoryObject(MemoryObject):
@@ -88,7 +85,7 @@ class ListMemoryObject(MemoryObject):
     def __repr__(self) -> str:
         if hasattr(self, 'obj'):
             return str(self.obj)
-        return f'{self.kind}{self.items}'
+        return f'{self.typeinfo.kind}{self.items}'
 
 
 class DictMemoryObject(MemoryObject):
@@ -121,12 +118,12 @@ class DictMemoryObject(MemoryObject):
     def __repr__(self) -> str:
         if hasattr(self, 'obj'):
             return str(self.obj)
-        return f'{self.kind}{self.items}'
+        return f'{self.typeinfo.kind}{self.items}'
 
 
 class ReduceMemoryObject(MemoryObject):
     strategy: str = 'reduce'
-    constructor: str
+    constructor: TypeInfo
     args: PythonId
     state: PythonId
     listitems: PythonId
@@ -148,20 +145,19 @@ class ReduceMemoryObject(MemoryObject):
                 )
         ]
 
-        constructor_name = get_type_name(self.reduce_value[0])
+        constructor_kind = get_kind(self.reduce_value[0])
 
-        is_reconstructor = constructor_name == 'copyreg._reconstructor'
+        is_reconstructor = str(constructor_kind) == 'copyreg._reconstructor'
         is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
 
         callable_constructor: Callable
         if is_reconstructor and is_user_type:
             callable_constructor = self.reduce_value[1][0].__new__
-            type_name = get_type_name(self.reduce_value[1][0])
-            self.constructor = f'{type_name}.__new__'
+            self.constructor = TypeInfo('builtins', 'object.__new__')
             self.args = serializer.write_object_to_memory([self.reduce_value[1][0]])
         else:
             callable_constructor = self.reduce_value[0]
-            self.constructor = constructor_name
+            self.constructor = constructor_kind
             self.args = serializer.write_object_to_memory(self.reduce_value[1])
 
         self.deserialized_obj = callable_constructor(*serializer[self.args])

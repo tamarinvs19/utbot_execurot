@@ -1,8 +1,7 @@
 import importlib
 import json
-import logging
 import sys
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Dict, Iterable, Union
 from utbot_executor.deep_serialization.memory_objects import (
     MemoryObject,
     ReprMemoryObject,
@@ -11,7 +10,7 @@ from utbot_executor.deep_serialization.memory_objects import (
     ReduceMemoryObject,
     MemoryDump
 )
-from utbot_executor.deep_serialization.utils import PythonId
+from utbot_executor.deep_serialization.utils import PythonId, TypeInfo
 
 
 class MemoryObjectEncoder(json.JSONEncoder):
@@ -20,8 +19,10 @@ class MemoryObjectEncoder(json.JSONEncoder):
             base_json = {
                 'strategy': o.strategy,
                 'id': o.id_value(),
-                'kind': o.kind,
-                'module': o.module,
+                'typeinfo': {
+                    'kind': o.typeinfo.kind,
+                    'module': o.typeinfo.module,
+                },
                 'comparable': o.comparable,
             }
             if isinstance(o, ReprMemoryObject):
@@ -51,22 +52,28 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
         if dct['strategy'] == 'repr':
             obj = ReprMemoryObject.__new__(ReprMemoryObject)
             obj.value = dct['value']
-            obj.kind = dct['kind']
-            obj.module = dct['module']
+            obj.typeinfo = TypeInfo(
+                kind=dct['kind'],
+                module=dct['module']
+            )
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'list':
             obj = ListMemoryObject.__new__(ListMemoryObject)
             obj.items = dct['items']
-            obj.kind = dct['kind']
-            obj.module = dct['module']
+            obj.typeinfo = TypeInfo(
+                kind=dct['kind'],
+                module=dct['module']
+            )
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'dict':
             obj = DictMemoryObject.__new__(DictMemoryObject)
             obj.items = dct['items']
-            obj.kind = dct['kind']
-            obj.module = dct['module']
+            obj.typeinfo = TypeInfo(
+                kind=dct['kind'],
+                module=dct['module']
+            )
             obj.comparable = dct['comparable']
             return obj
         if dct['strategy'] == 'reduce':
@@ -76,8 +83,10 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj.state = dct['state']
             obj.listitems = dct['listitems']
             obj.dictitems = dct['dictitems']
-            obj.kind = dct['kind']
-            obj.module = dct['module']
+            obj.typeinfo = TypeInfo(
+                kind=dct['kind'],
+                module=dct['module']
+            )
             obj.comparable = dct['comparable']
             return obj
     return dct
@@ -125,7 +134,7 @@ class DumpLoader:
                     for key, value in dump_object.items.items()
                     }
         elif isinstance(dump_object, ReduceMemoryObject):
-            constructor = eval(dump_object.constructor)
+            constructor = eval(str(dump_object.constructor))
             args = self.load_object(dump_object.args)
             real_object = constructor(*args)
 

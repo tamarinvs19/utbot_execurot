@@ -166,13 +166,14 @@ class ReduceMemoryObject(MemoryObject):
     def initialize(self) -> None:
         serializer = PythonSerializer()
 
+        self.comparable = True  # for recursive objects
         self.state = serializer.write_object_to_memory(self.reduce_value[2])
         self.listitems = serializer.write_object_to_memory(list(self.reduce_value[3]))
         self.dictitems = serializer.write_object_to_memory(dict(self.reduce_value[4]))
 
         deserialized_obj = self.deserialized_obj
         for key, value in serializer[self.state].items():
-            object.__setattr__(deserialized_obj, key, value)
+            object.__setattr__(deserialized_obj, key, value)  # TODO: change object.__setattr__ by self.__setattr__?
         for item in serializer[self.listitems]:
             deserialized_obj.append(item)
         for key, value in serializer[self.dictitems].items():

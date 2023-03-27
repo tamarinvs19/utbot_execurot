@@ -151,10 +151,11 @@ class ReduceMemoryObject(MemoryObject):
         self.constructor = get_type_name(self.reduce_value[0])
 
         is_reconstructor = self.constructor == 'copyreg._reconstructor'
-        is_user_type = hasattr(self.reduce_value[1][1], '__class__') and self.reduce_value[1][1].__class__ == object and self.reduce_value[1][2] is None
+        is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
 
         if is_reconstructor and is_user_type:
-            self.constructor = f'{self.reduce_value[1][0]}.__new__'
+            type_name = get_type_name(self.reduce_value[1][0])
+            self.constructor = f'{type_name}.__new__'
             self.args = serializer.write_object_to_memory(self.reduce_value[1][0])
         else:
             self.args = serializer.write_object_to_memory(self.reduce_value[1])

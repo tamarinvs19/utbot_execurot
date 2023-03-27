@@ -17,13 +17,15 @@ def serialize_object(obj: Any) -> Tuple[str, str]:
     return id_, json.dumps({'objects': serializer.memory}, cls=MemoryDumpEncoder)
 
 
-def serialize_objects(objs: List[Any]) -> Tuple[List[PythonId], str]:
+def serialize_objects(objs: List[Any], clear_visited: bool = False) -> Tuple[List[PythonId], str]:
     """
     Serialize objects with shared memory.
     Returns list of object ids and memory dump.
     """
 
     serializer = PythonSerializer()
+    if clear_visited:
+        serializer.clear_visited()
     ids = [
         serializer.write_object_to_memory(obj)
         for obj in objs
@@ -39,4 +41,5 @@ def deserialize_objects(ids: List[str], memory: str, imports: List[str]) -> Dict
 
     memory_dump = deserialize_memory_objects(memory)
     loader = DumpLoader(memory_dump)
+    loader.add_imports(imports)
     return {python_id: loader.load_object(PythonId(python_id)) for python_id in ids}

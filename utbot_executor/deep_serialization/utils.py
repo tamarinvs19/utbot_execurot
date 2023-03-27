@@ -14,9 +14,9 @@ class TypeInfo:
 
     @property
     def qualname(self):
-        if self.module == "":
-            return f"{self.module}.{self.kind}"
-        return self.kind
+        if self.module == '' or self.module == 'builtins':
+            return self.kind
+        return f'{self.module}.{self.kind}'
 
     @staticmethod
     def from_str(representation: str) -> TypeInfo:
@@ -25,9 +25,7 @@ class TypeInfo:
         return TypeInfo('', representation)
 
     def __str__(self):
-        if self.module != '':
-            return f'{self.module}.{self.kind}'
-        return self.kind
+        return self.qualname
 
 
 def check_comparability(py_object: object, deserialized_py_object: object) -> bool:
@@ -42,6 +40,19 @@ def get_kind(py_object: object) -> TypeInfo:
         return TypeInfo(py_object.__module__, py_object.__qualname__)
     if callable(py_object):
         return TypeInfo("typing", "Callable")
+    module = type(py_object).__module__
+    qualname = type(py_object).__qualname__
+    return TypeInfo(module, qualname)
+
+
+def get_constructor_kind(py_object: object) -> TypeInfo:
+    """Get module and name of objcet"""
+    if py_object is None:
+        return TypeInfo("types", "NoneType")
+    if isinstance(py_object, type):
+        return TypeInfo(py_object.__module__, py_object.__qualname__)
+    if callable(py_object):
+        return TypeInfo(py_object.__module__, py_object.__qualname__)
     module = type(py_object).__module__
     qualname = type(py_object).__qualname__
     return TypeInfo(module, qualname)

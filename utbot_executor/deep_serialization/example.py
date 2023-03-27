@@ -2,9 +2,9 @@ import datetime
 import json
 from pprint import pprint
 
-from deep_serialization.memory_objects import PythonSerializer
-from deep_serialization.json_converter import MemoryDumpEncoder
-from deep_serialization.deep_serialization import deserialize_objects
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer
+from utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder
+from utbot_executor.deep_serialization.deep_serialization import deserialize_objects
 
 
 class B:
@@ -26,14 +26,20 @@ def run():
     pprint(serializer_.write_object_to_memory(a))
     pprint(serializer_.memory.objects)
     with open('test_json.json', 'w') as fout:
-        print(json.dumps(serializer_.memory, cls=MemoryDumpEncoder, indent=True), file=fout)
+        print(json.dumps({'objects': serializer_.memory}, cls=MemoryDumpEncoder, indent=True), file=fout)
+
 
 def deserialize():
-    run()
+    # run()
     with open('test_json.json', 'r') as fin:
         data = fin.read()
-    pprint(deserialize_objects(["140239390887040"], data, ['copyreg._reconstructor', 'deep_serialization.example.B', 'datetime.datetime']))
+    print(data)
+    pprint(deserialize_objects(["139825536103424"], data, [
+        'copyreg',
+        'utbot_executor.deep_serialization.example',
+        'datetime'
+    ]))
 
 
 if __name__ == '__main__':
-    run()
+    deserialize()

@@ -1,7 +1,7 @@
 import importlib
 import json
 import sys
-from typing import Dict, Iterable, Union
+from typing import Dict, Iterable, Union, Set
 from utbot_executor.deep_serialization.memory_objects import (
     MemoryObject,
     ReprMemoryObject,
@@ -19,10 +19,7 @@ class MemoryObjectEncoder(json.JSONEncoder):
             base_json = {
                 'strategy': o.strategy,
                 'id': o.id_value(),
-                'typeinfo': {
-                    'kind': o.typeinfo.kind,
-                    'module': o.typeinfo.module,
-                },
+                'typeinfo': o.typeinfo,
                 'comparable': o.comparable,
             }
             if isinstance(o, ReprMemoryObject):
@@ -43,6 +40,11 @@ class MemoryDumpEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, MemoryDump):
             return {id_: MemoryObjectEncoder().default(o) for id_, o in o.objects.items()}
+        if isinstance(o, TypeInfo):
+            return {
+                'kind': o.kind,
+                'module': o.module,
+            }
         return json.JSONEncoder.default(self, o)
 
 
@@ -78,7 +80,10 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             return obj
         if dct['strategy'] == 'reduce':
             obj = ReduceMemoryObject.__new__(ReduceMemoryObject)
-            obj.constructor = dct['constructor']
+            obj.constructor = TypeInfo(
+                kind=dct['constructor']['kind'],
+                module=dct['constructor']['module'],
+            )
             obj.args = dct['args']
             obj.state = dct['state']
             obj.listitems = dct['listitems']
@@ -101,6 +106,7 @@ class DumpLoader:
     def __init__(self, memory_dump: MemoryDump):
         self.memory_dump = memory_dump
         self.memory: Dict[PythonId, object] = {}  # key is new id, value is real object
+        self.dump_id_to_real_id: Dict[PythonId, PythonId] = {}
 
     def add_syspaths(self, syspaths: Iterable[str]):
         for path in syspaths:
@@ -114,8 +120,8 @@ class DumpLoader:
                 globals()[submodule_name] = importlib.import_module(submodule_name)
 
     def load_object(self, python_id: PythonId) -> object:
-        if python_id in self.memory:
-            return self.memory[python_id]
+        if python_id in self.dump_id_to_real_id:
+            return self.memory[self.dump_id_to_real_id[python_id]]
 
         dump_object = self.memory_dump.objects[python_id]
         real_object: object
@@ -134,11 +140,14 @@ class DumpLoader:
                     for key, value in dump_object.items.items()
                     }
         elif isinstance(dump_object, ReduceMemoryObject):
-            constructor = eval(str(dump_object.constructor))
+            constructor = eval(dump_object.constructor.qualname)
             args = self.load_object(dump_object.args)
             real_object = constructor(*args)
 
-            self.memory[PythonId(str(id(real_object)))] = real_object
+            id_ = PythonId(str(id(real_object)))
+            self.dump_id_to_real_id[python_id] = id_
+            self.memory[id_] = real_object
+
             state = self.load_object(dump_object.state)
             for field, value in state.items():
                 setattr(real_object, field, value)
@@ -151,7 +160,10 @@ class DumpLoader:
         else:
             raise TypeError(f'Invalid type {dump_object}')
 
-        self.memory[PythonId(str(id(real_object)))] = real_object
+        id_ = PythonId(str(id(real_object)))
+        self.dump_id_to_real_id[python_id] = id_
+        self.memory[id_] = real_object
+
         return real_object
 
 

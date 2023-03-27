@@ -1,9 +1,10 @@
 from __future__ import annotations
 from itertools import zip_longest
 import pickle
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Type
 
-from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, has_repr, TypeInfo
+from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
+    has_repr, TypeInfo, get_constructor_kind
 
 
 class MemoryObject:
@@ -145,9 +146,9 @@ class ReduceMemoryObject(MemoryObject):
                 )
         ]
 
-        constructor_kind = get_kind(self.reduce_value[0])
+        constructor_kind = get_constructor_kind(self.reduce_value[0])
 
-        is_reconstructor = str(constructor_kind) == 'copyreg._reconstructor'
+        is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
         is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
 
         callable_constructor: Callable
@@ -230,8 +231,11 @@ class MemoryDump:
 
 
 class PythonSerializer:
+    instance: PythonSerializer
     memory: MemoryDump
     created: bool = False
+
+    visited: Set[PythonId] = set()
 
     providers: List[MemoryObjectProvider] = [
             ListMemoryObjectProvider,
@@ -256,13 +260,21 @@ class PythonSerializer:
     def __getitem__(self, id_: PythonId) -> object:
         return self.get_by_id(id_).deserialized_obj
 
+    def clear_visited(self):
+        self.visited.clear()
+
     def write_object_to_memory(self, py_object: object) -> PythonId:
         """Save serialized py_object to memory and return id."""
 
         id_ = PythonId(str(id(py_object)))
+
+        if id_ in self.visited:
+            return id_
+
         for provider in self.providers:
             serializer = provider.get_serializer(py_object)
             if serializer is not None:
+                self.visited.add(id_)
                 mem_obj = serializer(py_object)
                 self.memory.objects[id_] = mem_obj
                 mem_obj.initialize()

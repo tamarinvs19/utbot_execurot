@@ -102,7 +102,8 @@ def _serialize_state(
     Returns: tuple of args ids, kwargs ids, result id and serialized memory."""
 
     all_arguments = args + list(kwargs.values()) + [result]
-    ids, serialized_memory = serialize_objects(all_arguments)
+
+    ids, serialized_memory = serialize_objects(all_arguments, True)
     return (
             ids[:len(args)],
             ids[len(args):len(args)+len(kwargs)],

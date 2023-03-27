@@ -1,7 +1,7 @@
 from __future__ import annotations
 from itertools import zip_longest
 import pickle
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, get_type_name, get_type, has_reduce, check_comparability, get_repr, has_repr
 
@@ -148,19 +148,23 @@ class ReduceMemoryObject(MemoryObject):
                 )
         ]
 
-        self.constructor = get_type_name(self.reduce_value[0])
+        constructor_name = get_type_name(self.reduce_value[0])
 
-        is_reconstructor = self.constructor == 'copyreg._reconstructor'
+        is_reconstructor = constructor_name == 'copyreg._reconstructor'
         is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
 
+        callable_constructor: Callable
         if is_reconstructor and is_user_type:
+            callable_constructor = self.reduce_value[1][0].__new__
             type_name = get_type_name(self.reduce_value[1][0])
             self.constructor = f'{type_name}.__new__'
-            self.args = serializer.write_object_to_memory(self.reduce_value[1][0])
+            self.args = serializer.write_object_to_memory([self.reduce_value[1][0]])
         else:
+            callable_constructor = self.reduce_value[0]
+            self.constructor = constructor_name
             self.args = serializer.write_object_to_memory(self.reduce_value[1])
 
-        self.deserialized_obj = self.reduce_value[0](*serializer[self.args])
+        self.deserialized_obj = callable_constructor(*serializer[self.args])
 
     def initialize(self) -> None:
         serializer = PythonSerializer()

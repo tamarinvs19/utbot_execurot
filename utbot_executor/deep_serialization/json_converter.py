@@ -53,8 +53,8 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj = ReprMemoryObject.__new__(ReprMemoryObject)
             obj.value = dct['value']
             obj.typeinfo = TypeInfo(
-                kind=dct['kind'],
-                module=dct['module']
+                kind=dct['typeinfo']['kind'],
+                module=dct['typeinfo']['module']
             )
             obj.comparable = dct['comparable']
             return obj
@@ -62,8 +62,8 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj = ListMemoryObject.__new__(ListMemoryObject)
             obj.items = dct['items']
             obj.typeinfo = TypeInfo(
-                kind=dct['kind'],
-                module=dct['module']
+                kind=dct['typeinfo']['kind'],
+                module=dct['typeinfo']['module']
             )
             obj.comparable = dct['comparable']
             return obj
@@ -71,8 +71,8 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj = DictMemoryObject.__new__(DictMemoryObject)
             obj.items = dct['items']
             obj.typeinfo = TypeInfo(
-                kind=dct['kind'],
-                module=dct['module']
+                kind=dct['typeinfo']['kind'],
+                module=dct['typeinfo']['module']
             )
             obj.comparable = dct['comparable']
             return obj
@@ -84,8 +84,8 @@ def as_repr_object(dct: Dict) -> Union[MemoryObject, Dict]:
             obj.listitems = dct['listitems']
             obj.dictitems = dct['dictitems']
             obj.typeinfo = TypeInfo(
-                kind=dct['kind'],
-                module=dct['module']
+                kind=dct['typeinfo']['kind'],
+                module=dct['typeinfo']['module']
             )
             obj.comparable = dct['comparable']
             return obj

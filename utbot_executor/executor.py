@@ -20,13 +20,13 @@ __all__ = ['PythonExecutor']
 
 
 def update_states(init_memory_dump: MemoryDump, state_before: MemoryDump) -> MemoryDump:
-    for id_, obj in init_memory_dump.objects.items():
-        if isinstance(obj, ReduceMemoryObject):
-            memory_object = state_before.objects[id_]
-            if isinstance(memory_object, ReduceMemoryObject):
-                obj.state = memory_object.state
-                obj.listitems = memory_object.listitems
-                obj.dictitems = memory_object.dictitems
+    # for id_, obj in init_memory_dump.objects.items():
+    #     if isinstance(obj, ReduceMemoryObject):
+    #         memory_object = state_before.objects[id_]
+    #         if isinstance(memory_object, ReduceMemoryObject):
+    #             obj.state = memory_object.state
+    #             obj.listitems = memory_object.listitems
+    #             obj.dictitems = memory_object.dictitems
     for id_, obj in state_before.objects.items():
         if id_ not in init_memory_dump.objects:
             init_memory_dump.objects[id_] = obj
@@ -104,8 +104,8 @@ class PythonExecutor:
 
         try:
             state_before_memory = _load_objects(args + list(kwargs.values()))
-            # init_state_before = update_states(loader.reload_id(), state_before_memory)
-            serialize_state_before = serialize_memory_dump(state_before_memory)
+            init_state_before = update_states(loader.reload_id(), state_before_memory)
+            serialize_state_before = serialize_memory_dump(init_state_before)
             value = _run_calculate_function_value(
                     function,
                     args,

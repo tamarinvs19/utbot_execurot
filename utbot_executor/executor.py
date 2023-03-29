@@ -27,6 +27,9 @@ def update_states(init_memory_dump: MemoryDump, state_before: MemoryDump) -> Mem
                 obj.state = memory_object.state
                 obj.listitems = memory_object.listitems
                 obj.dictitems = memory_object.dictitems
+    for id_, obj in state_before.objects.items():
+        if id_ not in init_memory_dump.objects:
+            init_memory_dump.objects[id_] = obj
     return init_memory_dump
 
 

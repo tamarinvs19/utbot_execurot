@@ -141,6 +141,7 @@ class DumpLoader:
                     obj.state = memory_object.state
                     obj.listitems = memory_object.listitems
                     obj.dictitems = memory_object.dictitems
+        return memory_dump
 
     @staticmethod
     def add_syspaths(syspaths: Iterable[str]):

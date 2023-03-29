@@ -54,6 +54,7 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
                 dct['imports'],
                 dct['syspaths'],
                 dct['argumentsIds'],
+                dct['kwargumentsIds'],
                 dct['serializedMemory'],
                 dct['filepath'],
                 )

@@ -11,11 +11,31 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
+from utbot_executor.deep_serialization.memory_objects import MemoryDump, ReduceMemoryObject, PythonSerializer
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout as __suppress_stdout
 
 __all__ = ['PythonExecutor']
+
+
+def update_states(init_memory_dump: MemoryDump, state_before: MemoryDump) -> MemoryDump:
+    for id_, obj in init_memory_dump.objects.items():
+        if isinstance(obj, ReduceMemoryObject):
+            memory_object = state_before.objects[id_]
+            if isinstance(memory_object, ReduceMemoryObject):
+                obj.state = memory_object.state
+                obj.listitems = memory_object.listitems
+                obj.dictitems = memory_object.dictitems
+    return init_memory_dump
+
+
+def _load_objects(objs: List[Any]) -> MemoryDump:
+    serializer = PythonSerializer()
+    serializer.clear_visited()
+    for obj in objs:
+        serializer.write_object_to_memory(obj)
+    return serializer.memory
 
 
 class PythonExecutor:
@@ -80,8 +100,9 @@ class PythonExecutor:
         logging.debug("Arguments have been created")
 
         try:
-            state_before = loader.update_states(loader.reload_id())
-            serialize_state_before = serialize_memory_dump(state_before)
+            state_before_memory = _load_objects(args + list(kwargs.values()))
+            init_state_before = update_states(loader.reload_id(), state_before_memory)
+            serialize_state_before = serialize_memory_dump(init_state_before)
             value = _run_calculate_function_value(
                     function,
                     args,

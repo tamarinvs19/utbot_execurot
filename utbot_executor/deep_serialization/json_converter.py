@@ -1,6 +1,7 @@
 import copy
 import importlib
 import json
+import logging
 import sys
 from typing import Dict, Iterable, Union, Set
 from utbot_executor.deep_serialization.memory_objects import (
@@ -113,6 +114,8 @@ class DumpLoader:
         new_memory_objects: Dict[PythonId, MemoryObject] = {}
         for id_, obj in self.memory_dump.objects.items():
             new_memory_object = copy.deepcopy(obj)
+            read_id = self.dump_id_to_real_id[id_]
+            new_memory_object.obj = self.memory[read_id]
             if isinstance(new_memory_object, ReprMemoryObject):
                 pass
             elif isinstance(new_memory_object, ListMemoryObject):

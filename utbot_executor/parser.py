@@ -10,6 +10,7 @@ class ExecutionRequest:
     imports: List[str]
     syspaths: List[str]
     arguments_ids: List[str]
+    kwarguments_ids: Dict[str, str]
     serialized_memory: str
     filepath: str
 
@@ -27,7 +28,7 @@ class ExecutionSuccessResponse(ExecutionResponse):
     state_before: str
     state_after: str
     args_ids: List[str]
-    kwargs_ids: List[str]
+    kwargs_ids: Dict[str, str]
     result_id: str
 
 

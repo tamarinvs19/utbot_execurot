@@ -15,15 +15,28 @@ class B:
         self.time = datetime.datetime.now()
 
 
+class Node:
+    def __init__(self, name: str):
+        self.name = name
+        self.children = []
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
 def run():
     from pprint import pprint
 
-    c = ["Alex"]
-    b = B(1, 2, 3)
-    b.b1 = B(4, 5, b)
-    a = [1, 2, float('inf'), "abc", {1: 1}, None, b, c]
+    # c = ["Alex"]
+    # b = B(1, 2, 3)
+    # b.b1 = B(4, 5, b)
+    # a = [1, 2, float('inf'), "abc", {1: 1}, None, b, c]
+    x = Node("x")
+    y = Node("y")
+    x.children.append(y)
+    y.children.append(x)
     serializer_ = PythonSerializer()
-    pprint(serializer_.write_object_to_memory(a))
+    pprint(serializer_.write_object_to_memory(x))
     pprint(serializer_.memory.objects)
     with open('test_json.json', 'w') as fout:
         print(json.dumps({'objects': serializer_.memory}, cls=MemoryDumpEncoder, indent=True), file=fout)
@@ -34,7 +47,7 @@ def deserialize():
     with open('test_json.json', 'r') as fin:
         data = fin.read()
     print(data)
-    pprint(deserialize_objects(["139825536103424"], data, [
+    pprint(deserialize_objects(["140340324106560"], data, [
         'copyreg',
         'utbot_executor.deep_serialization.example',
         'datetime'
@@ -42,4 +55,4 @@ def deserialize():
 
 
 if __name__ == '__main__':
-    deserialize()
+    run()

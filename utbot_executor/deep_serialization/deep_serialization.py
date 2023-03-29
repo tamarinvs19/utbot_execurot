@@ -1,9 +1,13 @@
 import json
 from typing import Any, Dict, Tuple, List
 
-from utbot_executor.deep_serialization.memory_objects import PythonSerializer
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer, MemoryDump
 from utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder, deserialize_memory_objects, DumpLoader
 from utbot_executor.deep_serialization.utils import PythonId
+
+
+def serialize_memory_dump(dump: MemoryDump):
+    return json.dumps({'objects': dump}, cls=MemoryDumpEncoder)
 
 
 def serialize_object(obj: Any) -> Tuple[str, str]:
@@ -14,7 +18,7 @@ def serialize_object(obj: Any) -> Tuple[str, str]:
 
     serializer = PythonSerializer()
     id_ = serializer.write_object_to_memory(obj)
-    return id_, json.dumps({'objects': serializer.memory}, cls=MemoryDumpEncoder)
+    return id_, serialize_memory_dump(serializer.memory)
 
 
 def serialize_objects(objs: List[Any], clear_visited: bool = False) -> Tuple[List[PythonId], str]:
@@ -30,7 +34,7 @@ def serialize_objects(objs: List[Any], clear_visited: bool = False) -> Tuple[Lis
         serializer.write_object_to_memory(obj)
         for obj in objs
     ]
-    return ids, json.dumps({'objects': serializer.memory}, cls=MemoryDumpEncoder)
+    return ids, serialize_memory_dump(serializer.memory)
 
 
 def deserialize_objects(ids: List[str], memory: str, imports: List[str]) -> Dict[str, object]:

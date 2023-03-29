@@ -1,453 +1,202 @@
 {
  "objects": {
-  "139825536103424": {
+  "140154580038656": {
    "strategy": "list",
-   "id": "139825536103424",
-   "typeinfo": {
-    "kind": "list",
-    "module": "builtins"
-   },
-   "comparable": false,
-   "items": [
-    "139825542971632",
-    "139825542971664",
-    "139825537865808",
-    "139825538907760",
-    "139825538036416",
-    "139825549839936",
-    "139825539052208",
-    "139825537843264"
-   ]
-  },
-  "139825542971632": {
-   "strategy": "repr",
-   "id": "139825542971632",
-   "typeinfo": {
-    "kind": "int",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "1"
-  },
-  "139825542971664": {
-   "strategy": "repr",
-   "id": "139825542971664",
-   "typeinfo": {
-    "kind": "int",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "2"
-  },
-  "139825537865808": {
-   "strategy": "repr",
-   "id": "139825537865808",
-   "typeinfo": {
-    "kind": "float",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "float('inf')"
-  },
-  "139825538907760": {
-   "strategy": "repr",
-   "id": "139825538907760",
-   "typeinfo": {
-    "kind": "str",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "'abc'"
-  },
-  "139825538036416": {
-   "strategy": "dict",
-   "id": "139825538036416",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {
-    "139825542971632": "139825542971632"
-   }
-  },
-  "139825549839936": {
-   "strategy": "repr",
-   "id": "139825549839936",
-   "typeinfo": {
-    "kind": "NoneType",
-    "module": "types"
-   },
-   "comparable": true,
-   "value": "None"
-  },
-  "139825536823360": {
-   "strategy": "list",
-   "id": "139825536823360",
+   "id": "140154580038656",
    "typeinfo": {
     "kind": "list",
     "module": "builtins"
    },
    "comparable": true,
    "items": [
-    "94604906580432"
+    "93887946160096"
    ]
   },
-  "94604906580432": {
+  "93887946160096": {
    "strategy": "repr",
-   "id": "94604906580432",
+   "id": "93887946160096",
    "typeinfo": {
-    "kind": "B",
-    "module": "utbot_executor.deep_serialization.example"
+    "kind": "Node",
+    "module": "__main__"
    },
    "comparable": true,
-   "value": "utbot_executor.deep_serialization.example.B"
+   "value": "__main__.Node"
   },
-  "139825539052208": {
+  "140154580077440": {
    "strategy": "reduce",
-   "id": "139825539052208",
+   "id": "140154580077440",
    "typeinfo": {
-    "kind": "B",
-    "module": "utbot_executor.deep_serialization.example"
+    "kind": "Node",
+    "module": "__main__"
    },
-   "comparable": false,
+   "comparable": true,
    "constructor": {
     "kind": "object.__new__",
     "module": "builtins"
    },
-   "args": "139825536823360",
-   "state": "139825538931776",
-   "listitems": "139825536945920",
-   "dictitems": "139825536946368"
+   "args": "140154580038656",
+   "state": "140154580038592",
+   "listitems": "140154580206272",
+   "dictitems": "140154580213376"
   },
-  "139825538931776": {
+  "140154580038592": {
    "strategy": "dict",
-   "id": "139825538931776",
+   "id": "140154580038592",
    "typeinfo": {
     "kind": "dict",
     "module": "builtins"
    },
    "comparable": true,
    "items": {
-    "139825538038000": "139825539319456",
-    "139825538038064": "139825542971664",
-    "139825538038128": "139825542971696",
-    "139825538726832": "139825539319632"
+    "140154676644592": "140154677036080",
+    "140154676644976": "140154579924992"
    }
   },
-  "139825538038000": {
+  "140154676644592": {
    "strategy": "repr",
-   "id": "139825538038000",
+   "id": "140154676644592",
    "typeinfo": {
     "kind": "str",
     "module": "builtins"
    },
    "comparable": true,
-   "value": "'b1'"
+   "value": "'name'"
   },
-  "139825536822848": {
+  "140154677036080": {
+   "strategy": "repr",
+   "id": "140154677036080",
+   "typeinfo": {
+    "kind": "str",
+    "module": "builtins"
+   },
+   "comparable": true,
+   "value": "'x'"
+  },
+  "140154676644976": {
+   "strategy": "repr",
+   "id": "140154676644976",
+   "typeinfo": {
+    "kind": "str",
+    "module": "builtins"
+   },
+   "comparable": true,
+   "value": "'children'"
+  },
+  "140154579924992": {
    "strategy": "list",
-   "id": "139825536822848",
+   "id": "140154579924992",
    "typeinfo": {
     "kind": "list",
     "module": "builtins"
    },
    "comparable": true,
    "items": [
-    "94604906580432"
+    "140154580077488"
    ]
   },
-  "139825539319456": {
-   "strategy": "reduce",
-   "id": "139825539319456",
+  "140154580038528": {
+   "strategy": "list",
+   "id": "140154580038528",
    "typeinfo": {
-    "kind": "B",
-    "module": "utbot_executor.deep_serialization.example"
+    "kind": "list",
+    "module": "builtins"
    },
-   "comparable": false,
+   "comparable": true,
+   "items": [
+    "93887946160096"
+   ]
+  },
+  "140154580077488": {
+   "strategy": "reduce",
+   "id": "140154580077488",
+   "typeinfo": {
+    "kind": "Node",
+    "module": "__main__"
+   },
+   "comparable": true,
    "constructor": {
     "kind": "object.__new__",
     "module": "builtins"
    },
-   "args": "139825536822848",
-   "state": "139825538931904",
-   "listitems": "139825536892352",
-   "dictitems": "139825536892800"
+   "args": "140154580038528",
+   "state": "140154580039168",
+   "listitems": "140154580210432",
+   "dictitems": "140154580212224"
   },
-  "139825538931904": {
+  "140154580039168": {
    "strategy": "dict",
-   "id": "139825538931904",
+   "id": "140154580039168",
    "typeinfo": {
     "kind": "dict",
     "module": "builtins"
    },
    "comparable": true,
    "items": {
-    "139825538038000": "139825542971728",
-    "139825538038064": "139825542971760",
-    "139825538038128": "139825539052208",
-    "139825538726832": "139825539319296"
+    "140154676644592": "140154671279856",
+    "140154676644976": "140154580039104"
    }
   },
-  "139825542971728": {
+  "140154671279856": {
    "strategy": "repr",
-   "id": "139825542971728",
-   "typeinfo": {
-    "kind": "int",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "4"
-  },
-  "139825538038064": {
-   "strategy": "repr",
-   "id": "139825538038064",
+   "id": "140154671279856",
    "typeinfo": {
     "kind": "str",
     "module": "builtins"
    },
    "comparable": true,
-   "value": "'b2'"
+   "value": "'y'"
   },
-  "139825542971760": {
-   "strategy": "repr",
-   "id": "139825542971760",
-   "typeinfo": {
-    "kind": "int",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "5"
-  },
-  "139825538038128": {
-   "strategy": "repr",
-   "id": "139825538038128",
-   "typeinfo": {
-    "kind": "str",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "'b3'"
-  },
-  "139825538726832": {
-   "strategy": "repr",
-   "id": "139825538726832",
-   "typeinfo": {
-    "kind": "str",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "'time'"
-  },
-  "139825539054512": {
+  "140154580039104": {
    "strategy": "list",
-   "id": "139825539054512",
-   "typeinfo": {
-    "kind": "tuple",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": [
-    "139825536776352"
-   ]
-  },
-  "139825536776352": {
-   "strategy": "repr",
-   "id": "139825536776352",
-   "typeinfo": {
-    "kind": "bytes",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "b'\\x07\\xe7\\x03\\x1b\\r-1\\x03\\xa2\\xe6'"
-  },
-  "139825539319296": {
-   "strategy": "reduce",
-   "id": "139825539319296",
-   "typeinfo": {
-    "kind": "datetime",
-    "module": "datetime"
-   },
-   "comparable": true,
-   "constructor": {
-    "kind": "datetime",
-    "module": "datetime"
-   },
-   "args": "139825539054512",
-   "state": "139825536889728",
-   "listitems": "139825536891392",
-   "dictitems": "139825536891840"
-  },
-  "139825536889728": {
-   "strategy": "dict",
-   "id": "139825536889728",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825536891392": {
-   "strategy": "list",
-   "id": "139825536891392",
-   "typeinfo": {
-    "kind": "list",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": []
-  },
-  "139825536891840": {
-   "strategy": "dict",
-   "id": "139825536891840",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825536892352": {
-   "strategy": "list",
-   "id": "139825536892352",
-   "typeinfo": {
-    "kind": "list",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": []
-  },
-  "139825536892800": {
-   "strategy": "dict",
-   "id": "139825536892800",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825542971696": {
-   "strategy": "repr",
-   "id": "139825542971696",
-   "typeinfo": {
-    "kind": "int",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "3"
-  },
-  "139825538154448": {
-   "strategy": "list",
-   "id": "139825538154448",
-   "typeinfo": {
-    "kind": "tuple",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": [
-    "139825536777744"
-   ]
-  },
-  "139825536777744": {
-   "strategy": "repr",
-   "id": "139825536777744",
-   "typeinfo": {
-    "kind": "bytes",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "value": "b'\\x07\\xe7\\x03\\x1b\\r-1\\x03\\xa2\\xd1'"
-  },
-  "139825539319632": {
-   "strategy": "reduce",
-   "id": "139825539319632",
-   "typeinfo": {
-    "kind": "datetime",
-    "module": "datetime"
-   },
-   "comparable": true,
-   "constructor": {
-    "kind": "datetime",
-    "module": "datetime"
-   },
-   "args": "139825538154448",
-   "state": "139825536943296",
-   "listitems": "139825536944960",
-   "dictitems": "139825536945408"
-  },
-  "139825536943296": {
-   "strategy": "dict",
-   "id": "139825536943296",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825536944960": {
-   "strategy": "list",
-   "id": "139825536944960",
-   "typeinfo": {
-    "kind": "list",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": []
-  },
-  "139825536945408": {
-   "strategy": "dict",
-   "id": "139825536945408",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825536945920": {
-   "strategy": "list",
-   "id": "139825536945920",
-   "typeinfo": {
-    "kind": "list",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": []
-  },
-  "139825536946368": {
-   "strategy": "dict",
-   "id": "139825536946368",
-   "typeinfo": {
-    "kind": "dict",
-    "module": "builtins"
-   },
-   "comparable": true,
-   "items": {}
-  },
-  "139825537843264": {
-   "strategy": "list",
-   "id": "139825537843264",
+   "id": "140154580039104",
    "typeinfo": {
     "kind": "list",
     "module": "builtins"
    },
    "comparable": true,
    "items": [
-    "139825538038256"
+    "140154580077440"
    ]
   },
-  "139825538038256": {
-   "strategy": "repr",
-   "id": "139825538038256",
+  "140154580210432": {
+   "strategy": "list",
+   "id": "140154580210432",
    "typeinfo": {
-    "kind": "str",
+    "kind": "list",
     "module": "builtins"
    },
    "comparable": true,
-   "value": "'Alex'"
+   "items": []
+  },
+  "140154580212224": {
+   "strategy": "dict",
+   "id": "140154580212224",
+   "typeinfo": {
+    "kind": "dict",
+    "module": "builtins"
+   },
+   "comparable": true,
+   "items": {}
+  },
+  "140154580206272": {
+   "strategy": "list",
+   "id": "140154580206272",
+   "typeinfo": {
+    "kind": "list",
+    "module": "builtins"
+   },
+   "comparable": true,
+   "items": []
+  },
+  "140154580213376": {
+   "strategy": "dict",
+   "id": "140154580213376",
+   "typeinfo": {
+    "kind": "dict",
+    "module": "builtins"
+   },
+   "comparable": true,
+   "items": {}
   }
  }
 }

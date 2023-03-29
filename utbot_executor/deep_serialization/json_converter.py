@@ -1,3 +1,4 @@
+import copy
 import importlib
 import json
 import sys
@@ -108,12 +109,35 @@ class DumpLoader:
         self.memory: Dict[PythonId, object] = {}  # key is new id, value is real object
         self.dump_id_to_real_id: Dict[PythonId, PythonId] = {}
 
-    def add_syspaths(self, syspaths: Iterable[str]):
+    def reload_id(self) -> MemoryDump:
+        new_memory_objects: Dict[PythonId, MemoryObject] = {}
+        for id_, obj in self.memory_dump.objects.items():
+            new_memory_object = copy.deepcopy(obj)
+            if isinstance(new_memory_object, ReprMemoryObject):
+                pass
+            elif isinstance(new_memory_object, ListMemoryObject):
+                new_memory_object.items = [self.dump_id_to_real_id[id_] for id_ in new_memory_object.items]
+            elif isinstance(new_memory_object, DictMemoryObject):
+                new_memory_object.items = {
+                    self.dump_id_to_real_id[id_key]: self.dump_id_to_real_id[id_value]
+                    for id_key, id_value in new_memory_object.items.items()
+                }
+            elif isinstance(new_memory_object, ReduceMemoryObject):
+                new_memory_object.args = self.dump_id_to_real_id[new_memory_object.args]
+                new_memory_object.state = self.dump_id_to_real_id[new_memory_object.state]
+                new_memory_object.listitems = self.dump_id_to_real_id[new_memory_object.listitems]
+                new_memory_object.dictitems = self.dump_id_to_real_id[new_memory_object.dictitems]
+            new_memory_objects[self.dump_id_to_real_id[id_]] = new_memory_object
+        return MemoryDump(new_memory_objects)
+
+    @staticmethod
+    def add_syspaths(syspaths: Iterable[str]):
         for path in syspaths:
             if path not in sys.path:
                 sys.path.insert(0, path)
 
-    def add_imports(self, imports: Iterable[str]):
+    @staticmethod
+    def add_imports(imports: Iterable[str]):
         for module in imports:
             for i in range(1, module.count('.') + 2):
                 submodule_name = '.'.join(module.split('.', maxsplit=i)[:i])

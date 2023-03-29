@@ -104,8 +104,8 @@ class PythonExecutor:
 
         try:
             state_before_memory = _load_objects(args + list(kwargs.values()))
-            init_state_before = update_states(loader.reload_id(), state_before_memory)
-            serialize_state_before = serialize_memory_dump(init_state_before)
+            # init_state_before = update_states(loader.reload_id(), state_before_memory)
+            serialize_state_before = serialize_memory_dump(state_before_memory)
             value = _run_calculate_function_value(
                     function,
                     args,

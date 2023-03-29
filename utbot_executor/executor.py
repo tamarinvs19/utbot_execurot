@@ -86,7 +86,7 @@ class PythonExecutor:
                     args,
                     kwargs,
                     request.filepath,
-                    serialize_memory_dump(state_before)
+                    state_before
                     )
         except Exception as ex:
             logging.debug("Error \n%s", traceback.format_exc())

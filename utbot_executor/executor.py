@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
+from utbot_executor.deep_serialization.memory_objects import MemoryDump
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout as __suppress_stdout
@@ -80,7 +81,7 @@ class PythonExecutor:
         logging.debug("Arguments have been created")
 
         try:
-            state_before = serialize_memory_dump(loader.reload_id())
+            state_before = loader.update_states(loader.reload_id())
             value = _run_calculate_function_value(
                     function,
                     args,
@@ -120,7 +121,7 @@ def _run_calculate_function_value(
         args: List[Any],
         kwargs: Dict[str, Any],
         fullpath: str,
-        state_before: str
+        state_before: MemoryDump
     ) -> ExecutionResponse:
     """ Calculate function evaluation result.
 

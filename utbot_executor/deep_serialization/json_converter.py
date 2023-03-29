@@ -133,6 +133,15 @@ class DumpLoader:
             new_memory_objects[self.dump_id_to_real_id[id_]] = new_memory_object
         return MemoryDump(new_memory_objects)
 
+    def update_states(self, memory_dump: MemoryDump) -> MemoryDump:
+        for id_, obj in memory_dump.objects.items():
+            if isinstance(obj, ReduceMemoryObject):
+                memory_object = self.memory[id_]
+                if isinstance(memory_object, ReduceMemoryObject):
+                    obj.state = memory_object.state
+                    obj.listitems = memory_object.listitems
+                    obj.dictitems = memory_object.dictitems
+
     @staticmethod
     def add_syspaths(syspaths: Iterable[str]):
         for path in syspaths:

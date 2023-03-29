@@ -45,6 +45,7 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
             'imports',
             'syspaths',
             'argumentsIds',
+            'kwargumentsIds',
             'serializedMemory',
             'filepath'
             }:

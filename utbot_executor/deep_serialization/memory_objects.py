@@ -14,13 +14,11 @@ class MemoryObject:
     is_draft: bool
     deserialized_obj: object
     obj: object
-    id_value: str
 
     def __init__(self, obj: object) -> None:
         self.is_draft = True
         self.typeinfo = get_kind(obj)
         self.obj = obj
-        self.save_id_value()
 
     def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
         self.deserialized_obj = deserialized_obj
@@ -30,8 +28,8 @@ class MemoryObject:
     def initialize(self) -> None:
         self._initialize()
 
-    def save_id_value(self) -> None:
-        self.id_value = str(id(self.obj))
+    def id_value(self) -> str:
+        return str(id(self.obj))
 
     def __repr__(self) -> str:
         if hasattr(self, 'obj'):

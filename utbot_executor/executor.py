@@ -120,19 +120,20 @@ def _serialize_state(
         args: List[Any],
         kwargs: Dict[str, Any],
         result: Any = None,
-        ) -> Tuple[List[PythonId], Dict[str, PythonId], PythonId, MemoryDump]:
+        ) -> Tuple[List[PythonId], Dict[str, PythonId], PythonId, MemoryDump, str]:
     """Serialize objects from args, kwargs and result.
 
     Returns: tuple of args ids, kwargs ids, result id and serialized memory."""
 
     all_arguments = args + list(kwargs.values()) + [result]
 
-    ids, memory = serialize_objects_dump(all_arguments, True)
+    ids, memory, serialized_memory = serialize_objects_dump(all_arguments, True)
     return (
             ids[:len(args)],
             dict(zip(kwargs.keys(), ids[len(args):len(args)+len(kwargs)])),
             ids[-1],
-            copy.deepcopy(memory)
+            copy.deepcopy(memory),
+            serialized_memory,
             )
 
 
@@ -147,7 +148,7 @@ def _run_calculate_function_value(
 
     Return serialized data: status, coverage info, object ids and memory."""
 
-    _, _, _, state_before = _serialize_state(args, kwargs)
+    _, _, _, state_before, serialized_state_before = _serialize_state(args, kwargs)
 
     __is_exception = False
 
@@ -177,7 +178,7 @@ def _run_calculate_function_value(
     logging.debug("Covered lines: %s", __stmts_filtered_with_def)
     logging.debug("Missed lines: %s", __missed_filtered)
 
-    args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)
+    args_ids, kwargs_ids, result_id, state_after, serialized_state_after = _serialize_state(args, kwargs, __result)
     ids = args_ids + list(kwargs_ids.values())
     # state_before, state_after = compress_memory(ids, state_before, state_after)
     diff_ids = compress_memory(ids, state_before, state_after)
@@ -188,8 +189,8 @@ def _run_calculate_function_value(
             statements=__stmts_filtered_with_def,
             missed_statements=__missed_filtered,
             state_init=state_init,
-            state_before=serialize_memory_dump(state_before),
-            state_after=serialize_memory_dump(state_after),
+            state_before=serialized_state_before,
+            state_after=serialized_state_after,
             diff_ids=diff_ids,
             args_ids=args_ids,
             kwargs_ids=kwargs_ids,

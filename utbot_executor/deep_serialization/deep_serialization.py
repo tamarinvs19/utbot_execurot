@@ -37,7 +37,7 @@ def serialize_objects(objs: List[Any], clear_visited: bool = False) -> Tuple[Lis
     return ids, serialize_memory_dump(serializer.memory)
 
 
-def serialize_objects_dump(objs: List[Any], clear_visited: bool = False) -> Tuple[List[PythonId], MemoryDump]:
+def serialize_objects_dump(objs: List[Any], clear_visited: bool = False) -> Tuple[List[PythonId], MemoryDump, str]:
     """
     Serialize objects with shared memory.
     Returns list of object ids and memory dump.
@@ -50,7 +50,7 @@ def serialize_objects_dump(objs: List[Any], clear_visited: bool = False) -> Tupl
         serializer.write_object_to_memory(obj)
         for obj in objs
     ]
-    return ids, serializer.memory
+    return ids, serializer.memory, serialize_memory_dump(serializer.memory)
 
 
 def deserialize_objects(ids: List[str], memory: str, imports: List[str]) -> Dict[str, object]:

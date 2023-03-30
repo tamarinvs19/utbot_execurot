@@ -25,6 +25,7 @@ class ExecutionSuccessResponse(ExecutionResponse):
     is_exception: bool
     statements: List[int]
     missed_statements: List[int]
+    state_init: str
     state_before: str
     state_after: str
     args_ids: List[str]
@@ -74,6 +75,7 @@ class ResponseEncoder(json.JSONEncoder):
                 "isException": o.is_exception,
                 "statements": o.statements,
                 "missedStatements": o.missed_statements,
+                "stateInit": o.state_init,
                 "stateBefore": o.state_before,
                 "stateAfter": o.state_after,
                 "argsIds": o.args_ids,

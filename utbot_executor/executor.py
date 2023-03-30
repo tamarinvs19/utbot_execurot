@@ -9,24 +9,19 @@ import trace
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
-from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump
+from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump, \
+    serialize_objects_dump
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
 from utbot_executor.deep_serialization.memory_objects import MemoryDump, ReduceMemoryObject, PythonSerializer
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
+from utbot_executor.memory_compressor import compress_memory
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
 from utbot_executor.utils import suppress_stdout as __suppress_stdout
 
 __all__ = ['PythonExecutor']
 
 
-def update_states(init_memory_dump: MemoryDump, state_before: MemoryDump) -> MemoryDump:
-    # for id_, obj in init_memory_dump.objects.items():
-    #     if isinstance(obj, ReduceMemoryObject):
-    #         memory_object = state_before.objects[id_]
-    #         if isinstance(memory_object, ReduceMemoryObject):
-    #             obj.state = memory_object.state
-    #             obj.listitems = memory_object.listitems
-    #             obj.dictitems = memory_object.dictitems
+def _update_states(init_memory_dump: MemoryDump, state_before: MemoryDump) -> MemoryDump:
     for id_, obj in state_before.objects.items():
         if id_ not in init_memory_dump.objects:
             init_memory_dump.objects[id_] = obj
@@ -97,23 +92,23 @@ class PythonExecutor:
             args = [loader.load_object(PythonId(arg_id)) for arg_id in request.arguments_ids]
             logging.debug("Arguments: %s", args)
             kwargs = {name: loader.load_object(PythonId(kwarg_id)) for name, kwarg_id in request.kwarguments_ids.items()}
-        except Exception as ex:
+        except Exception as _:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
         logging.debug("Arguments have been created")
 
         try:
             state_before_memory = _load_objects(args + list(kwargs.values()))
-            init_state_before = update_states(loader.reload_id(), state_before_memory)
-            serialize_state_before = serialize_memory_dump(init_state_before)
+            init_state_before = _update_states(loader.reload_id(), state_before_memory)
+            serialized_state_init = serialize_memory_dump(init_state_before)
             value = _run_calculate_function_value(
                     function,
                     args,
                     kwargs,
                     request.filepath,
-                    serialize_state_before
+                    serialized_state_init
                     )
-        except Exception as ex:
+        except Exception as _:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
         logging.debug("Value have been calculated: %s", value)
@@ -124,19 +119,19 @@ def _serialize_state(
         args: List[Any],
         kwargs: Dict[str, Any],
         result: Any = None,
-        ) -> Tuple[List[PythonId], Dict[str, PythonId], PythonId, str]:
+        ) -> Tuple[List[PythonId], Dict[str, PythonId], PythonId, MemoryDump]:
     """Serialize objects from args, kwargs and result.
 
     Returns: tuple of args ids, kwargs ids, result id and serialized memory."""
 
     all_arguments = args + list(kwargs.values()) + [result]
 
-    ids, serialized_memory = serialize_objects(all_arguments, True)
+    ids, memory = serialize_objects_dump(all_arguments, True)
     return (
             ids[:len(args)],
             dict(zip(kwargs.keys(), ids[len(args):len(args)+len(kwargs)])),
             ids[-1],
-            serialized_memory,
+            memory
             )
 
 
@@ -145,13 +140,13 @@ def _run_calculate_function_value(
         args: List[Any],
         kwargs: Dict[str, Any],
         fullpath: str,
-        state_before: str
+        state_init: str
     ) -> ExecutionResponse:
     """ Calculate function evaluation result.
 
     Return serialized data: status, coverage info, object ids and memory."""
 
-    # _, _, _, state_before = serialize_memory_dump()
+    _, _, _, state_before = _serialize_state(args, kwargs)
 
     __is_exception = False
 
@@ -182,14 +177,17 @@ def _run_calculate_function_value(
     logging.debug("Missed lines: %s", __missed_filtered)
 
     args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)
+    # ids = args_ids + list(kwargs_ids.values())
+    # state_before, state_after = compress_memory(ids, state_before, state_after)
 
     return ExecutionSuccessResponse(
             status="success",
             is_exception=__is_exception,
             statements=__stmts_filtered_with_def,
             missed_statements=__missed_filtered,
-            state_before=state_before,
-            state_after=state_after,
+            state_init=state_init,
+            state_before=serialize_memory_dump(state_before),
+            state_after=serialize_memory_dump(state_after),
             args_ids=args_ids,
             kwargs_ids=kwargs_ids,
             result_id=result_id,

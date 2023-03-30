@@ -1,4 +1,5 @@
 """Python code executor for UnitTestBot"""
+import copy
 import inspect
 import importlib
 import json
@@ -131,7 +132,7 @@ def _serialize_state(
             ids[:len(args)],
             dict(zip(kwargs.keys(), ids[len(args):len(args)+len(kwargs)])),
             ids[-1],
-            memory
+            copy.deepcopy(memory)
             )
 
 

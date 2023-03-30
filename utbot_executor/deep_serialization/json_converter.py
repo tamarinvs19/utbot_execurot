@@ -20,7 +20,7 @@ class MemoryObjectEncoder(json.JSONEncoder):
         if isinstance(o, MemoryObject):
             base_json = {
                 'strategy': o.strategy,
-                'id': o.id_value(),
+                'id': o.id_value,
                 'typeinfo': o.typeinfo,
                 'comparable': o.comparable,
             }

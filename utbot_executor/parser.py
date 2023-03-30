@@ -28,6 +28,7 @@ class ExecutionSuccessResponse(ExecutionResponse):
     state_init: str
     state_before: str
     state_after: str
+    diff_ids: List[str]
     args_ids: List[str]
     kwargs_ids: Dict[str, str]
     result_id: str
@@ -78,6 +79,7 @@ class ResponseEncoder(json.JSONEncoder):
                 "stateInit": o.state_init,
                 "stateBefore": o.state_before,
                 "stateAfter": o.state_after,
+                "diffIds": o.diff_ids,
                 "argsIds": o.args_ids,
                 "kwargsIds": o.kwargs_ids,
                 "resultId": o.result_id,

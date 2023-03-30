@@ -177,8 +177,9 @@ def _run_calculate_function_value(
     logging.debug("Missed lines: %s", __missed_filtered)
 
     args_ids, kwargs_ids, result_id, state_after = _serialize_state(args, kwargs, __result)
-    # ids = args_ids + list(kwargs_ids.values())
+    ids = args_ids + list(kwargs_ids.values())
     # state_before, state_after = compress_memory(ids, state_before, state_after)
+    diff_ids = compress_memory(ids, state_before, state_after)
 
     return ExecutionSuccessResponse(
             status="success",
@@ -188,6 +189,7 @@ def _run_calculate_function_value(
             state_init=state_init,
             state_before=serialize_memory_dump(state_before),
             state_after=serialize_memory_dump(state_after),
+            diff_ids=diff_ids,
             args_ids=args_ids,
             kwargs_ids=kwargs_ids,
             result_id=result_id,

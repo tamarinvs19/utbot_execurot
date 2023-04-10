@@ -140,6 +140,7 @@ class ReduceMemoryObject(MemoryObject):
     state: PythonId
     listitems: PythonId
     dictitems: PythonId
+    comment: Optional[str] = None
 
     reduce_value: List[Any] = []
 
@@ -204,6 +205,7 @@ class ReduceMemoryObject(MemoryObject):
 
         comparable = self.obj == deserialized_obj
         if hasattr(type(comparable), '__module__') and type(comparable).__module__ == 'numpy':
+            self.comment = str(self.obj)
             if type(comparable).__qualname__ == 'ndarray':
                 comparable = bool(comparable.all())
             else:

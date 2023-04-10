@@ -34,6 +34,7 @@ class MemoryObjectEncoder(json.JSONEncoder):
                 base_json['state'] = o.state
                 base_json['listitems'] = o.listitems
                 base_json['dictitems'] = o.dictitems
+                base_json['comment'] = o.comment
             return base_json
         return json.JSONEncoder.default(self, o)
 

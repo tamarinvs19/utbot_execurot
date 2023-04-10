@@ -204,7 +204,10 @@ class ReduceMemoryObject(MemoryObject):
 
         comparable = self.obj == deserialized_obj
         if hasattr(type(comparable), '__module__') and type(comparable).__module__ == 'numpy':
-            comparable = comparable.__bool__()
+            if type(comparable).__qualname__ == 'ndarray':
+                comparable = bool(comparable.all())
+            else:
+                comparable = comparable.__bool__()
 
         super()._initialize(deserialized_obj, comparable)
 

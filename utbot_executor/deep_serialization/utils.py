@@ -18,6 +18,12 @@ class TypeInfo:
             return self.kind
         return f'{self.module}.{self.kind}'
 
+    @property
+    def fullname(self):
+        if self.module == '':
+            return self.kind
+        return f'{self.module}.{self.kind}'
+
     @staticmethod
     def from_str(representation: str) -> TypeInfo:
         if '.' in representation:
@@ -59,10 +65,11 @@ def get_constructor_kind(py_object: object) -> TypeInfo:
 
 
 def has_reduce(py_object: object) -> bool:
-    if getattr(py_object, '__reduce__', None) is None:
+    reduce = getattr(py_object, '__reduce__', None)
+    if reduce is None:
         return False
     try:
-        py_object.__reduce__()
+        reduce()
         return True
     except TypeError:
         return False
@@ -101,6 +108,7 @@ def check_eval(py_object: object) -> bool:
 def has_repr(py_object: object) -> bool:
     reprable_types = [
             type(None),
+            bool,
             int,
             float,
             bytes,

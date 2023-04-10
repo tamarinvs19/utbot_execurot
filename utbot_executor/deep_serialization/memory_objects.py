@@ -1,10 +1,16 @@
 from __future__ import annotations
+
+import copyreg
+import logging
+import traceback
 from itertools import zip_longest
 import pickle
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Final, Iterable
 
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
     has_repr, TypeInfo, get_constructor_kind
+
+PICKLE_PROTO: Final = 4
 
 
 class MemoryObject:
@@ -79,6 +85,11 @@ class ListMemoryObject(MemoryObject):
             self.items.append(elem_id)
 
         deserialized_obj = [serializer[elem] for elem in self.items]
+        if self.typeinfo.fullname == 'builtins.tuple':
+            deserialized_obj = tuple(deserialized_obj)
+        elif self.typeinfo.fullname == 'builtins.set':
+            deserialized_obj = set(deserialized_obj)
+
         comparable = all(serializer.get_by_id(elem).comparable for elem in self.items)
 
         super()._initialize(deserialized_obj, comparable)
@@ -161,7 +172,9 @@ class ReduceMemoryObject(MemoryObject):
             self.constructor = constructor_kind
             self.args = serializer.write_object_to_memory(self.reduce_value[1])
 
-        self.deserialized_obj = callable_constructor(*serializer[self.args])
+        args = serializer[self.args]
+        if isinstance(args, Iterable):
+            self.deserialized_obj = callable_constructor(*args)
 
     def initialize(self) -> None:
         serializer = PythonSerializer()
@@ -172,14 +185,27 @@ class ReduceMemoryObject(MemoryObject):
         self.dictitems = serializer.write_object_to_memory(dict(self.reduce_value[4]))
 
         deserialized_obj = self.deserialized_obj
-        for key, value in serializer[self.state].items():
-            object.__setattr__(deserialized_obj, key, value)  # TODO: change object.__setattr__ by self.__setattr__?
-        for item in serializer[self.listitems]:
-            deserialized_obj.append(item)
-        for key, value in serializer[self.dictitems].items():
-            deserialized_obj[key] = value
+        state = serializer[self.state]
+        if isinstance(state, dict):
+            for key, value in state.items():
+                setattr(deserialized_obj, key, value)
+        elif hasattr(deserialized_obj, '__setstate__'):
+            deserialized_obj.__setstate__(state)
 
-        comparable = self.obj == deserialized_obj
+        items = serializer[self.listitems]
+        if isinstance(items, Iterable):
+            for item in items:
+                deserialized_obj.append(item)
+
+        dictitems = serializer[self.dictitems]
+        if isinstance(dictitems, Dict):
+            for key, value in dictitems.items():
+                deserialized_obj[key] = value
+
+        if self.typeinfo.fullname == 'numpy.ndarray':
+            comparable = bool((self.obj == deserialized_obj).all())
+        else:
+            comparable = self.obj == deserialized_obj
 
         super()._initialize(deserialized_obj, comparable)
 

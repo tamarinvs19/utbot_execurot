@@ -155,9 +155,9 @@ class DumpLoader:
         if isinstance(dump_object, ReprMemoryObject):
             real_object = eval(dump_object.value)
         elif isinstance(dump_object, ListMemoryObject):
-            if dump_object.qualname == 'builtins.set':
+            if dump_object.typeinfo.fullname == 'builtins.set':
                 real_object = set(self.load_object(item) for item in dump_object.items)
-            elif dump_object.qualname == 'builtins.tuple':
+            elif dump_object.typeinfo.fullname == 'builtins.tuple':
                 real_object = tuple(self.load_object(item) for item in dump_object.items)
             else:
                 real_object = [self.load_object(item) for item in dump_object.items]
@@ -176,14 +176,22 @@ class DumpLoader:
             self.memory[id_] = real_object
 
             state = self.load_object(dump_object.state)
-            for field, value in state.items():
-                setattr(real_object, field, value)
+            if isinstance(state, dict):
+                for field, value in state.items():
+                    setattr(real_object, field, value)
+            elif isinstance(state, tuple):
+                if hasattr(real_object, '__setstate__'):
+                    real_object.__setstate__(state)
+
             listitems = self.load_object(dump_object.listitems)
-            for listitem in listitems:
-                real_object.append(listitem)
+            if isinstance(listitems, Iterable):
+                for listitem in listitems:
+                    real_object.append(listitem)
+
             dictitems = self.load_object(dump_object.dictitems)
-            for key, dictitem in dictitems.items():
-                real_object[key] = dictitem
+            if isinstance(dictitems, Dict):
+                for key, dictitem in dictitems.items():
+                    real_object[key] = dictitem
         else:
             raise TypeError(f'Invalid type {dump_object}')
 

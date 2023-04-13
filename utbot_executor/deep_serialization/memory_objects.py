@@ -7,6 +7,7 @@ from itertools import zip_longest
 import pickle
 from typing import Any, Callable, Dict, List, Optional, Set, Type, Final, Iterable
 
+from utbot_executor.deep_serialization.numpy_serialization import is_numpy_ndarray
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
     has_repr, TypeInfo, get_constructor_kind
 
@@ -162,9 +163,17 @@ class ReduceMemoryObject(MemoryObject):
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
         is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_ndarray = is_numpy_ndarray(self.obj)
 
         callable_constructor: Callable
-        if is_reconstructor and is_user_type:
+        if is_ndarray:
+            callable_constructor = lambda _: self.obj
+            self.constructor = TypeInfo('numpy', 'array')
+            self.args = serializer.write_object_to_memory(self.obj.data.tolist())
+            self.reduce_value[2] = {}
+            self.reduce_value[3] = []
+            self.reduce_value[4] = {}
+        elif is_reconstructor and is_user_type:
             callable_constructor = self.reduce_value[1][0].__new__
             self.constructor = TypeInfo('builtins', 'object.__new__')
             self.args = serializer.write_object_to_memory([self.reduce_value[1][0]])
@@ -205,10 +214,10 @@ class ReduceMemoryObject(MemoryObject):
 
         comparable = self.obj == deserialized_obj
         if hasattr(type(comparable), '__module__') and type(comparable).__module__ == 'numpy':
-            self.comment = str(self.obj)
-            if type(comparable).__qualname__ == 'ndarray':
-                comparable = bool(comparable.all())
+            if is_numpy_ndarray(self.obj):
+                comparable = True
             else:
+                self.comment = str(self.obj)
                 comparable = comparable.__bool__()
 
         super()._initialize(deserialized_obj, comparable)

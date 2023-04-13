@@ -169,7 +169,7 @@ class ReduceMemoryObject(MemoryObject):
         if is_ndarray:
             callable_constructor = lambda _: self.obj
             self.constructor = TypeInfo('numpy', 'array')
-            self.args = serializer.write_object_to_memory(self.obj.data.tolist())
+            self.args = serializer.write_object_to_memory([self.obj.data.tolist()])
             self.reduce_value[2] = {}
             self.reduce_value[3] = []
             self.reduce_value[4] = {}

@@ -13,6 +13,7 @@ class ExecutionRequest:
     kwarguments_ids: Dict[str, str]
     serialized_memory: str
     filepath: str
+    coverage_id: str
 
 
 class ExecutionResponse:
@@ -49,7 +50,8 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
             'argumentsIds',
             'kwargumentsIds',
             'serializedMemory',
-            'filepath'
+            'filepath',
+            'coverageId',
             }:
         return ExecutionRequest(
                 dct['functionName'],
@@ -60,6 +62,7 @@ def as_execution_result(dct: Dict) -> Union[ExecutionRequest, Dict]:
                 dct['kwargumentsIds'],
                 dct['serializedMemory'],
                 dct['filepath'],
+                dct['coverageId'],
                 )
     return dct
 

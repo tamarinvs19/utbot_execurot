@@ -2,7 +2,6 @@
 import copy
 import inspect
 import importlib
-import json
 import logging
 import pathlib
 import sys
@@ -17,6 +16,7 @@ from utbot_executor.deep_serialization.memory_objects import MemoryDump, ReduceM
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
 from utbot_executor.memory_compressor import compress_memory
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
+from utbot_executor.ut_tracer import UtTracer
 from utbot_executor.utils import suppress_stdout as __suppress_stdout
 
 __all__ = ['PythonExecutor']
@@ -142,7 +142,8 @@ def _run_calculate_function_value(
         args: List[Any],
         kwargs: Dict[str, Any],
         fullpath: str,
-        state_init: str
+        state_init: str,
+        tracer: UtTracer,
     ) -> ExecutionResponse:
     """ Calculate function evaluation result.
 
@@ -155,10 +156,11 @@ def _run_calculate_function_value(
     (__sources, __start, ) = inspect.getsourcelines(function)
     __end = __start + len(__sources)
 
-    __tracer = trace.Trace(
-        count=1,
-        trace=0,
-    )
+    # __tracer = trace.Trace(
+    #     count=1,
+    #     trace=0,
+    # )
+    __tracer = tracer
 
     try:
         with __suppress_stdout():

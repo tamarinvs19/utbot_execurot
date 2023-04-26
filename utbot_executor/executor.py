@@ -7,6 +7,7 @@ import pathlib
 import sys
 import trace
 import traceback
+import typing
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump, \
@@ -102,18 +103,25 @@ class PythonExecutor:
             state_before_memory = _load_objects(args + list(kwargs.values()))
             init_state_before = _update_states(loader.reload_id(), state_before_memory)
             serialized_state_init = serialize_memory_dump(init_state_before)
+
+            def _coverage_sender(info: typing.Tuple[str, int]):
+                logging.warning("ID: %s, Coverage: %s", request.coverage_id, info)
+
             value = _run_calculate_function_value(
                     function,
                     args,
                     kwargs,
                     request.filepath,
-                    serialized_state_init
+                    serialized_state_init,
+                    tracer=UtTracer(_coverage_sender)
                     )
         except Exception as _:
             logging.debug("Error \n%s", traceback.format_exc())
             return ExecutionFailResponse("fail", traceback.format_exc())
         logging.debug("Value have been calculated: %s", value)
         return value
+
+
 
 
 def _serialize_state(

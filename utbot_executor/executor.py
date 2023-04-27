@@ -111,7 +111,8 @@ class PythonExecutor:
             def _coverage_sender(info: typing.Tuple[str, int]):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 logging.debug("Coverage message: %s:%d", request.coverage_id, info[1])
-                sock.sendto(bytes(f'{request.coverage_id}:{info[1]}'), (self.coverage_hostname, self.coverage_port))
+                message = bytes(f'{request.coverage_id}:{info[1]}', encoding='utf-8')
+                sock.sendto(message, (self.coverage_hostname, self.coverage_port))
                 logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
 
             value = _run_calculate_function_value(

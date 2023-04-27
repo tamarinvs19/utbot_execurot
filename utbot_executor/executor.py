@@ -4,8 +4,8 @@ import inspect
 import importlib
 import logging
 import pathlib
+import socket
 import sys
-import trace
 import traceback
 import typing
 from typing import Any, Callable, Dict, Iterable, List, Tuple
@@ -39,6 +39,10 @@ def _load_objects(objs: List[Any]) -> MemoryDump:
 
 
 class PythonExecutor:
+    def __init__(self, coverage_hostname: str, coverage_port: int):
+        self.coverage_hostname = coverage_hostname
+        self.coverage_port = coverage_port
+
     @staticmethod
     def add_syspaths(syspaths: Iterable[str]):
         for path in syspaths:
@@ -105,7 +109,9 @@ class PythonExecutor:
             serialized_state_init = serialize_memory_dump(init_state_before)
 
             def _coverage_sender(info: typing.Tuple[str, int]):
-                logging.warning("ID: %s, Coverage: %s", request.coverage_id, info)
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.sendto(f'{request.coverage_id}:{info[1]}', (self.coverage_hostname, self.coverage_port))
+                logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
 
             value = _run_calculate_function_value(
                     function,

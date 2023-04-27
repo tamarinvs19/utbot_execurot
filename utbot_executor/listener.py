@@ -17,11 +17,13 @@ class PythonExecuteServer:
             self,
             hostname: str,
             port: int,
+            coverage_hostname: str,
+            coverage_port: str,
             ):
         logging.info('PythonExecutor is creating...')
         self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.clientsocket.connect((hostname, port))
-        self.executor = PythonExecutor()
+        self.executor = PythonExecutor(coverage_hostname, coverage_port)
 
     def run(self) -> None:
         logging.info('PythonExecutor is ready...')

@@ -160,8 +160,10 @@ class ReduceMemoryObject(MemoryObject):
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
         is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
 
+        is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
+
         callable_constructor: Callable
-        if is_reconstructor and is_user_type:
+        if (is_reconstructor and is_user_type) or is_newobj:
             callable_constructor = self.reduce_value[1][0].__new__
             self.constructor = TypeInfo('builtins', 'object.__new__')
             self.args = serializer.write_object_to_memory([self.reduce_value[1][0]])

@@ -164,13 +164,12 @@ class ReduceMemoryObject(MemoryObject):
 
         callable_constructor: Callable
         if (is_reconstructor and is_user_type) or is_newobj:
-            type_name = self.reduce_value[1][0]
-            callable_constructor = type_name.__new__
-            self.constructor = get_kind(type_name)
-            if len(type_name) == 1:
-                self.args = serializer.write_object_to_memory([])
-            else:
-                self.args = serializer.write_object_to_memory([type_name])
+            args = self.reduce_value[1]
+            callable_constructor = args[0].__new__
+            constructor = get_kind(args[0])
+            constructor.kind += '.__new__'
+            self.constructor = constructor
+            self.args = serializer.write_object_to_memory(args)
         else:
             callable_constructor = self.reduce_value[0]
             self.constructor = constructor_kind

@@ -1,8 +1,9 @@
 from __future__ import annotations
 from itertools import zip_longest
 import pickle
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Final, Iterable
 
+from utbot_executor.deep_serialization.config import PICKLE_PROTO
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
     has_repr, TypeInfo, get_constructor_kind, has_reduce_ex
 
@@ -79,6 +80,11 @@ class ListMemoryObject(MemoryObject):
             self.items.append(elem_id)
 
         deserialized_obj = [serializer[elem] for elem in self.items]
+        if self.typeinfo.fullname == 'builtins.tuple':
+            deserialized_obj = tuple(deserialized_obj)
+        elif self.typeinfo.fullname == 'builtins.set':
+            deserialized_obj = set(deserialized_obj)
+
         comparable = all(serializer.get_by_id(elem).comparable for elem in self.items)
 
         super()._initialize(deserialized_obj, comparable)
@@ -139,7 +145,7 @@ class ReduceMemoryObject(MemoryObject):
         if has_reduce(reduce_object):
             py_object_reduce = reduce_object.__reduce__()
         else:
-            py_object_reduce = reduce_object.__reduce_ex__(4)
+            py_object_reduce = reduce_object.__reduce_ex__(PICKLE_PROTO)
         self.reduce_value = [
             default if obj is None else obj
             for obj, default in zip_longest(
@@ -164,7 +170,9 @@ class ReduceMemoryObject(MemoryObject):
             self.constructor = constructor_kind
             self.args = serializer.write_object_to_memory(self.reduce_value[1])
 
-        self.deserialized_obj = callable_constructor(*serializer[self.args])
+        args = serializer[self.args]
+        if isinstance(args, Iterable):
+            self.deserialized_obj = callable_constructor(*args)
 
     def initialize(self) -> None:
         serializer = PythonSerializer()
@@ -175,12 +183,22 @@ class ReduceMemoryObject(MemoryObject):
         self.dictitems = serializer.write_object_to_memory(dict(self.reduce_value[4]))
 
         deserialized_obj = self.deserialized_obj
-        for key, value in serializer[self.state].items():
-            object.__setattr__(deserialized_obj, key, value)  # TODO: change object.__setattr__ by self.__setattr__?
-        for item in serializer[self.listitems]:
-            deserialized_obj.append(item)
-        for key, value in serializer[self.dictitems].items():
-            deserialized_obj[key] = value
+        state = serializer[self.state]
+        if isinstance(state, dict):
+            for key, value in state.items():
+                setattr(deserialized_obj, key, value)
+        elif hasattr(deserialized_obj, '__setstate__'):
+            deserialized_obj.__setstate__(state)
+
+        items = serializer[self.listitems]
+        if isinstance(items, Iterable):
+            for item in items:
+                deserialized_obj.append(item)
+
+        dictitems = serializer[self.dictitems]
+        if isinstance(dictitems, Dict):
+            for key, value in dictitems.items():
+                deserialized_obj[key] = value
 
         comparable = self.obj == deserialized_obj
 
@@ -212,7 +230,15 @@ class DictMemoryObjectProvider(MemoryObjectProvider):
 class ReduceMemoryObjectProvider(MemoryObjectProvider):
     @staticmethod
     def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
-        if has_reduce(obj) or has_reduce_ex(obj):
+        if has_reduce(obj):
+            return ReduceMemoryObject
+        return None
+
+
+class ReduceExMemoryObjectProvider(MemoryObjectProvider):
+    @staticmethod
+    def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
+        if has_reduce_ex(obj):
             return ReduceMemoryObject
         return None
 
@@ -246,6 +272,7 @@ class PythonSerializer:
             DictMemoryObjectProvider,
             ReduceMemoryObjectProvider,
             ReprMemoryObjectProvider,
+            ReduceExMemoryObjectProvider,
             ]
 
     def __new__(cls):

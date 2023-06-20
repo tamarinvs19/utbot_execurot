@@ -1,4 +1,3 @@
-from enum import Enum
 import logging
 import os
 import socket
@@ -9,7 +8,7 @@ from utbot_executor.parser import parse_request, serialize_response, ExecutionFa
 from utbot_executor.executor import PythonExecutor
 
 
-RECV_SIZE = 2048
+RECV_SIZE = 2**15
 
 
 class PythonExecuteServer:

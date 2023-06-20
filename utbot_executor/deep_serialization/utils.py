@@ -2,7 +2,9 @@ from __future__ import annotations
 import dataclasses
 import importlib
 import pickle
-from typing import NewType, Tuple
+from typing import NewType
+
+from utbot_executor.deep_serialization.config import PICKLE_PROTO
 
 PythonId = NewType('PythonId', str)
 
@@ -17,6 +19,13 @@ class TypeInfo:
         if self.module == '' or self.module == 'builtins':
             return self.kind
         return f'{self.module}.{self.kind}'
+
+    @property
+    def fullname(self):
+        if self.module == '':
+            return self.kind
+        else:
+            return f'{self.module}.{self.kind}'
 
     @staticmethod
     def from_str(representation: str) -> TypeInfo:
@@ -59,10 +68,11 @@ def get_constructor_kind(py_object: object) -> TypeInfo:
 
 
 def has_reduce(py_object: object) -> bool:
-    if getattr(py_object, '__reduce__', None) is None:
+    reduce = getattr(py_object, '__reduce__', None)
+    if reduce is None:
         return False
     try:
-        py_object.__reduce__()
+        reduce()
         return True
     except TypeError:
         return False
@@ -73,10 +83,11 @@ def has_reduce(py_object: object) -> bool:
 
 
 def has_reduce_ex(py_object: object) -> bool:
-    if getattr(py_object, '__reduce_ex__', None) is None:
+    reduce_ex = getattr(py_object, '__reduce_ex__', None)
+    if reduce_ex is None:
         return False
     try:
-        py_object.__reduce_ex__(4)
+        reduce_ex(PICKLE_PROTO)
         return True
     except TypeError:
         return False
@@ -116,6 +127,7 @@ def has_repr(py_object: object) -> bool:
     reprable_types = [
             type(None),
             int,
+            bool,
             float,
             bytes,
             bytearray,

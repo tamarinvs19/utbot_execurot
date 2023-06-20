@@ -4,7 +4,7 @@ import pickle
 from typing import Any, Callable, Dict, List, Optional, Set, Type
 
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
-    has_repr, TypeInfo, get_constructor_kind
+    has_repr, TypeInfo, get_constructor_kind, has_reduce_ex
 
 
 class MemoryObject:
@@ -136,7 +136,10 @@ class ReduceMemoryObject(MemoryObject):
         super().__init__(reduce_object)
         serializer = PythonSerializer()
 
-        py_object_reduce = reduce_object.__reduce__()
+        if has_reduce(reduce_object):
+            py_object_reduce = reduce_object.__reduce__()
+        else:
+            py_object_reduce = reduce_object.__reduce_ex__(4)
         self.reduce_value = [
             default if obj is None else obj
             for obj, default in zip_longest(
@@ -209,7 +212,7 @@ class DictMemoryObjectProvider(MemoryObjectProvider):
 class ReduceMemoryObjectProvider(MemoryObjectProvider):
     @staticmethod
     def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
-        if has_reduce(obj):
+        if has_reduce(obj) or has_reduce_ex(obj):
             return ReduceMemoryObject
         return None
 

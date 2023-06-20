@@ -72,6 +72,20 @@ def has_reduce(py_object: object) -> bool:
         return False
 
 
+def has_reduce_ex(py_object: object) -> bool:
+    if getattr(py_object, '__reduce_ex__', None) is None:
+        return False
+    try:
+        py_object.__reduce_ex__(4)
+        return True
+    except TypeError:
+        return False
+    except pickle.PicklingError:
+        return False
+    except Exception:
+        return False
+
+
 def get_repr(py_object: object) -> str:
     if isinstance(py_object, type):
         return str(get_kind(py_object))

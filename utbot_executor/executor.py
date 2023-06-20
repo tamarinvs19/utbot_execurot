@@ -109,11 +109,13 @@ class PythonExecutor:
             serialized_state_init = serialize_memory_dump(init_state_before)
 
             def _coverage_sender(info: typing.Tuple[str, int]):
-                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                logging.debug("Coverage message: %s:%d", request.coverage_id, info[1])
-                message = bytes(f'{request.coverage_id}:{info[1]}', encoding='utf-8')
-                sock.sendto(message, (self.coverage_hostname, self.coverage_port))
-                logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
+                if pathlib.Path(info[0]) == pathlib.Path(request.filepath):
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    logging.debug("Coverage message: %s:%d", request.coverage_id, info[1])
+                    logging.debug("Port: %d", self.coverage_port)
+                    message = bytes(f'{request.coverage_id}:{info[1]}', encoding='utf-8')
+                    sock.sendto(message, (self.coverage_hostname, self.coverage_port))
+                    logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
 
             value = _run_calculate_function_value(
                     function,

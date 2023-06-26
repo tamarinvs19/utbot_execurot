@@ -1,7 +1,7 @@
 """Python code executor for UnitTestBot"""
 import copy
-import inspect
 import importlib
+import inspect
 import logging
 import pathlib
 import socket
@@ -10,10 +10,10 @@ import traceback
 import typing
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
-from utbot_executor.deep_serialization.deep_serialization import serialize_objects, serialize_memory_dump, \
+from utbot_executor.deep_serialization.deep_serialization import serialize_memory_dump, \
     serialize_objects_dump
 from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
-from utbot_executor.deep_serialization.memory_objects import MemoryDump, ReduceMemoryObject, PythonSerializer
+from utbot_executor.deep_serialization.memory_objects import MemoryDump, PythonSerializer
 from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
 from utbot_executor.memory_compressor import compress_memory
 from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
@@ -109,11 +109,13 @@ class PythonExecutor:
             serialized_state_init = serialize_memory_dump(init_state_before)
 
             def _coverage_sender(info: typing.Tuple[str, int]):
-                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                logging.debug("Coverage message: %s:%d", request.coverage_id, info[1])
-                message = bytes(f'{request.coverage_id}:{info[1]}', encoding='utf-8')
-                sock.sendto(message, (self.coverage_hostname, self.coverage_port))
-                logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
+                if pathlib.Path(info[0]) == pathlib.Path(request.filepath):
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    logging.debug("Coverage message: %s:%d", request.coverage_id, info[1])
+                    logging.debug("Port: %d", self.coverage_port)
+                    message = bytes(f'{request.coverage_id}:{info[1]}', encoding='utf-8')
+                    sock.sendto(message, (self.coverage_hostname, self.coverage_port))
+                    logging.debug("ID: %s, Coverage: %s", request.coverage_id, info)
 
             value = _run_calculate_function_value(
                     function,
@@ -170,10 +172,6 @@ def _run_calculate_function_value(
     (__sources, __start, ) = inspect.getsourcelines(function)
     __end = __start + len(__sources)
 
-    # __tracer = trace.Trace(
-    #     count=1,
-    #     trace=0,
-    # )
     __tracer = tracer
 
     try:

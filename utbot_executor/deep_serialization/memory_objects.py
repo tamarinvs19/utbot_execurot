@@ -1,11 +1,14 @@
 from __future__ import annotations
+
+import inspect
+import logging
 from itertools import zip_longest
 import pickle
-from typing import Any, Callable, Dict, List, Optional, Set, Type, Final, Iterable
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Iterable
 
 from utbot_executor.deep_serialization.config import PICKLE_PROTO
 from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
-    has_repr, TypeInfo, get_constructor_kind, has_reduce_ex
+    has_repr, TypeInfo, get_constructor_kind, has_reduce_ex, get_constructor_info
 
 
 class MemoryObject:
@@ -117,8 +120,7 @@ class DictMemoryObject(MemoryObject):
             for key_id, value_id in self.items.items()
         }
         equals_len = len(self.obj) == len(deserialized_obj)
-        comparable = equals_len and\
-                all(serializer.get_by_id(value_id).comparable for elem in self.items)
+        comparable = equals_len and all(serializer.get_by_id(value_id).comparable for _ in self.items)
 
         super()._initialize(deserialized_obj, comparable)
 
@@ -142,42 +144,82 @@ class ReduceMemoryObject(MemoryObject):
         super().__init__(reduce_object)
         serializer = PythonSerializer()
 
-        if has_reduce(reduce_object):
-            py_object_reduce = reduce_object.__reduce__()
-        else:
+        if has_reduce_ex(reduce_object):
             py_object_reduce = reduce_object.__reduce_ex__(PICKLE_PROTO)
+        else:
+            py_object_reduce = reduce_object.__reduce__()
         self.reduce_value = [
             default if obj is None else obj
             for obj, default in zip_longest(
                 py_object_reduce,
                 [None, [], {}, [], {}],
                 fillvalue=None
-                )
+            )
         ]
 
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][
+            2] is None
+
+        is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
+
+        constructor_arguments, callable_constructor = self.constructor_builder(self.obj)
+
+        self.constructor = get_constructor_info(callable_constructor)
+        logging.debug("Constructor: %s", callable_constructor)
+        logging.debug("Constructor info: %s", self.constructor)
+        logging.debug("Constructor args: %s", constructor_arguments)
+        self.args = serializer.write_object_to_memory(constructor_arguments)
+
+        logging.debug("Params: %s, %s, %s", is_reconstructor, is_user_type, is_newobj)
+        logging.debug("Reduce: %s", self.reduce_value)
+        if isinstance(constructor_arguments, Iterable):
+            logging.debug("Constructor args: %s", constructor_arguments)
+            self.deserialized_obj = callable_constructor(*constructor_arguments)
+
+    def constructor_builder(self, obj: object):
+        constructor_kind = get_constructor_kind(self.reduce_value[0])
+
+        is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
+        is_reduce_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1
+        is_user_type = is_reduce_user_type or is_reduce_ex_user_type
 
         is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
 
         callable_constructor: Callable
-        if (is_reconstructor and is_user_type) or is_newobj:
-            args = self.reduce_value[1]
-            callable_constructor = args[0].__new__
-            constructor = get_kind(args[0])
-            constructor.kind += '.__new__'
-            self.constructor = constructor
-            self.args = serializer.write_object_to_memory(args)
-        else:
-            callable_constructor = self.reduce_value[0]
-            self.constructor = constructor_kind
-            self.args = serializer.write_object_to_memory(self.reduce_value[1])
+        constructor_arguments: Any
 
-        args = serializer[self.args]
-        if isinstance(args, Iterable):
-            self.deserialized_obj = callable_constructor(*args)
+        '''
+        1. __init__(self)
+        2. __init__(self, ...)
+        3. ???
+        '''
+        if is_user_type and hasattr(self.obj, '__init__'):
+            init_method = getattr(self.obj, '__init__', )
+            is_redef = not (init_method is object.__init__)
+            if (is_redef and len(inspect.signature(init_method).parameters) == 1) or not is_redef:
+                constructor_arguments = [self.reduce_value[1][0]]
+                callable_constructor = self.obj.__init__
+                return constructor_arguments, callable_constructor
+
+        if is_newobj:
+            constructor_arguments = self.reduce_value[1]
+            callable_constructor = self.obj.__new__
+            return constructor_arguments, callable_constructor
+
+        if is_reconstructor and is_user_type:
+            constructor_arguments = self.reduce_value[1]
+            if len(constructor_arguments) == 3 and constructor_arguments[-1] is None and constructor_arguments[-2] == object:
+                del constructor_arguments[1:]
+            callable_constructor = object.__new__
+            return constructor_arguments, callable_constructor
+
+        callable_constructor = self.reduce_value[0]
+        constructor_arguments = self.reduce_value[1]
+        return constructor_arguments, callable_constructor
 
     def initialize(self) -> None:
         serializer = PythonSerializer()
@@ -273,12 +315,12 @@ class PythonSerializer:
     visited: Set[PythonId] = set()
 
     providers: List[MemoryObjectProvider] = [
-            ListMemoryObjectProvider,
-            DictMemoryObjectProvider,
-            ReduceMemoryObjectProvider,
-            ReprMemoryObjectProvider,
-            ReduceExMemoryObjectProvider,
-            ]
+        ListMemoryObjectProvider,
+        DictMemoryObjectProvider,
+        ReduceMemoryObjectProvider,
+        ReprMemoryObjectProvider,
+        ReduceExMemoryObjectProvider,
+    ]
 
     def __new__(cls):
         if not cls.created:

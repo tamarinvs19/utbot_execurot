@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "utbot-executor"
-version = "1.4.31"
+version = "1.4.31.1.6"
 description = ""
 authors = ["Vyacheslav Tamarin <vyacheslav.tamarin@yandex.ru>"]
 readme = "README.md"
@@ -18,3 +18,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 utbot-executor = "utbot_executor:utbot_executor"
+

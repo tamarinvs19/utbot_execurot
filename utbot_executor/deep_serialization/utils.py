@@ -55,7 +55,7 @@ def get_kind(py_object: object) -> TypeInfo:
 
 
 def get_constructor_kind(py_object: object) -> TypeInfo:
-    """Get module and name of objcet"""
+    """Get module and name of object"""
     if py_object is None:
         return TypeInfo("types", "NoneType")
     if isinstance(py_object, type):
@@ -65,6 +65,14 @@ def get_constructor_kind(py_object: object) -> TypeInfo:
     module = type(py_object).__module__
     qualname = type(py_object).__qualname__
     return TypeInfo(module, qualname)
+
+
+def get_constructor_info(constructor: object) -> TypeInfo:
+    if constructor == object.__init__:
+        return TypeInfo("builtins", "object.__new__")
+    if constructor == object.__new__:
+        return TypeInfo("builtins", "object.__new__")
+    return TypeInfo(constructor.__module__, constructor.__qualname__)
 
 
 def has_reduce(py_object: object) -> bool:
@@ -156,4 +164,3 @@ def getattr_by_path(py_object: object, path: str) -> object:
     for layer in path.split("."):
         current_object = getattr(current_object, layer)
     return current_object
-        

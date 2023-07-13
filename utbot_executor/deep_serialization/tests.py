@@ -85,11 +85,26 @@ class MyClass:
         return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d
 
 
+class EmptyClass:
+    def __eq__(self, other):
+        return isinstance(other, EmptyClass)
+
+
+class EmptyInitClass:
+    def __init__(self):
+        pass
+
+    def __eq__(self, other):
+        return isinstance(other, EmptyInitClass)
+
+
 @pytest.mark.parametrize(
     'obj,imports',
     [
         (MyClass(1, 'a', [1, 2], {'a': b'c'}), ['utbot_executor.deep_serialization.tests']),
         (MyClass(1, 'a--------------\n\t', [], {}), ['utbot_executor.deep_serialization.tests']),
+        (EmptyClass(), ['utbot_executor.deep_serialization.tests']),
+        (EmptyInitClass(), ['utbot_executor.deep_serialization.tests']),
     ],
 )
 def test_classes(obj: typing.Any, imports: typing.List[str]):

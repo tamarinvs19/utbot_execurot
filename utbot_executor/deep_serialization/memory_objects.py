@@ -197,6 +197,7 @@ class ReduceMemoryObject(MemoryObject):
             init_method = getattr(self.obj, '__init__', )
             init_from_object = init_method is object.__init__
             if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
+                logging.debug("init with one argument! %s", init_method)
                 constructor_arguments = [self.reduce_value[1][0]]
                 callable_constructor = type(self.obj)
                 return constructor_arguments, callable_constructor

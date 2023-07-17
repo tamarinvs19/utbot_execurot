@@ -190,22 +190,24 @@ class ReduceMemoryObject(MemoryObject):
 
         logging.debug("Params: %s, %s, %s", is_reconstructor, is_user_type, is_newobj)
 
+        obj_type = self.obj if isinstance(self.obj, type) else type(self.obj)
+
         callable_constructor: Callable
         constructor_arguments: Any
 
         if is_user_type and hasattr(self.obj, '__init__'):
-            init_method = getattr(self.obj, '__init__')
+            init_method = getattr(obj_type, '__init__')
             init_from_object = init_method is object.__init__
             logging.debug("init_from_object = %s, signarure_size = %s", init_from_object, len(inspect.signature(init_method).parameters))
             if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
                 logging.debug("init with one argument! %s", init_method)
                 constructor_arguments = [self.reduce_value[1][0]]
-                callable_constructor = type(self.obj)
+                callable_constructor = obj_type
                 return constructor_arguments, callable_constructor
 
         if is_newobj:
             constructor_arguments = self.reduce_value[1]
-            callable_constructor = getattr(self.obj, '__new__')
+            callable_constructor = getattr(obj_type, '__new__')
             return constructor_arguments, callable_constructor
 
         if is_reconstructor and is_user_type:

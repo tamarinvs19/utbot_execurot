@@ -202,7 +202,7 @@ class ReduceMemoryObject(MemoryObject):
             is_redef = not (init_method is object.__init__)
             if (is_redef and len(inspect.signature(init_method).parameters) == 1) or not is_redef:
                 constructor_arguments = [self.reduce_value[1][0]]
-                callable_constructor = self.obj.__init__
+                callable_constructor = type(self.obj)
                 return constructor_arguments, callable_constructor
 
         if is_newobj:

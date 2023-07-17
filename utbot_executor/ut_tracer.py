@@ -36,7 +36,10 @@ class UtTracer:
             lineno = frame.f_lineno
             key = filename, lineno
             if key not in self.counts:
-                self.sender(key)
+                try:
+                    self.sender(key)
+                except Exception:
+                    pass
             self.counts[key] = self.counts.get(key, 0) + 1
         return self.localtrace
 
@@ -49,3 +52,11 @@ class UtTracer:
                     return self.localtrace
             else:
                 return None
+
+
+class PureTracer:
+    def __init__(self):
+        self.counts = []
+
+    def runfunc(self, func, /, *args, **kw):
+        return func(*args, **kw)

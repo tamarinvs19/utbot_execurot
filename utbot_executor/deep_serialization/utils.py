@@ -72,6 +72,8 @@ def get_constructor_info(constructor: object) -> TypeInfo:
         return TypeInfo("builtins", "object.__new__")
     if constructor == object.__new__:
         return TypeInfo("builtins", "object.__new__")
+    if constructor is None:
+        return TypeInfo("types", "NoneType")
     return TypeInfo(constructor.__module__, constructor.__qualname__)
 
 

@@ -194,8 +194,9 @@ class ReduceMemoryObject(MemoryObject):
         constructor_arguments: Any
 
         if is_user_type and hasattr(self.obj, '__init__'):
-            init_method = getattr(self.obj, '__init__', )
+            init_method = getattr(self.obj, '__init__')
             init_from_object = init_method is object.__init__
+            logging.debug("init_from_object = %s, signarure_size = %s", init_from_object, len(inspect.signature(init_method).parameters))
             if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
                 logging.debug("init with one argument! %s", init_method)
                 constructor_arguments = [self.reduce_value[1][0]]

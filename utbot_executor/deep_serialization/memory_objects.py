@@ -160,12 +160,12 @@ class ReduceMemoryObject(MemoryObject):
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][
-            2] is None
-
+        is_reduce_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1
+        is_user_type = is_reduce_user_type or is_reduce_ex_user_type
         is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
 
-        constructor_arguments, callable_constructor = self.constructor_builder(self.obj)
+        constructor_arguments, callable_constructor = self.constructor_builder()
 
         self.constructor = get_constructor_info(callable_constructor)
         logging.debug("Constructor: %s", callable_constructor)
@@ -179,35 +179,31 @@ class ReduceMemoryObject(MemoryObject):
             logging.debug("Constructor args: %s", constructor_arguments)
             self.deserialized_obj = callable_constructor(*constructor_arguments)
 
-    def constructor_builder(self, obj: object):
+    def constructor_builder(self):
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
         is_reduce_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
         is_reduce_ex_user_type = len(self.reduce_value[1]) == 1
         is_user_type = is_reduce_user_type or is_reduce_ex_user_type
-
         is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
+
+        logging.debug("Params: %s, %s, %s", is_reconstructor, is_user_type, is_newobj)
 
         callable_constructor: Callable
         constructor_arguments: Any
 
-        '''
-        1. __init__(self)
-        2. __init__(self, ...)
-        3. ???
-        '''
         if is_user_type and hasattr(self.obj, '__init__'):
             init_method = getattr(self.obj, '__init__', )
-            is_redef = not (init_method is object.__init__)
-            if (is_redef and len(inspect.signature(init_method).parameters) == 1) or not is_redef:
+            init_from_object = init_method is object.__init__
+            if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
                 constructor_arguments = [self.reduce_value[1][0]]
                 callable_constructor = type(self.obj)
                 return constructor_arguments, callable_constructor
 
         if is_newobj:
             constructor_arguments = self.reduce_value[1]
-            callable_constructor = self.obj.__new__
+            callable_constructor = getattr(self.obj, '__new__')
             return constructor_arguments, callable_constructor
 
         if is_reconstructor and is_user_type:

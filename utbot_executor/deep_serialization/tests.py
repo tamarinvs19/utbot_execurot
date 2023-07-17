@@ -5,6 +5,7 @@ import typing
 
 import pytest
 
+from utbot_executor.deep_serialization import json_converter
 from utbot_executor.deep_serialization.deep_serialization import serialize_objects_dump, deserialize_objects
 
 
@@ -142,3 +143,21 @@ class MyClassWithSlots:
 )
 def test_classes_with_slots(obj: typing.Any, imports: typing.List[str]):
     template_test_assert(obj, imports)
+
+
+def test_comparable():
+    obj = EmptyClass()
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
+    assert memory_dump.objects[serialized_obj_ids[0]].comparable
+
+
+class IncomparableClass:
+    pass
+
+
+def test_incomparable():
+    obj = IncomparableClass()
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
+    assert not memory_dump.objects[serialized_obj_ids[0]].comparable

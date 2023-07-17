@@ -27,3 +27,4 @@ def test_execution():
 
     assert response.status == "success"
     assert response.is_exception is False
+    assert response.diff_ids

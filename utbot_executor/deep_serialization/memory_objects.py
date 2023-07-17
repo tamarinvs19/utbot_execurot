@@ -160,8 +160,8 @@ class ReduceMemoryObject(MemoryObject):
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_reduce_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
-        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1
+        is_reduce_user_type = len(self.reduce_value[1]) == 3 and isinstance(self.reduce_value[1][0], type(self.obj)) and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1 and isinstance(self.reduce_value[1][0], type(self.obj))
         is_user_type = is_reduce_user_type or is_reduce_ex_user_type
         is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
 
@@ -183,8 +183,8 @@ class ReduceMemoryObject(MemoryObject):
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
         is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_reduce_user_type = len(self.reduce_value[1]) == 3 and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
-        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1
+        is_reduce_user_type = len(self.reduce_value[1]) == 3 and isinstance(self.reduce_value[1][0], type(self.obj)) and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
+        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1 and isinstance(self.reduce_value[1][0], type(self.obj))
         is_user_type = is_reduce_user_type or is_reduce_ex_user_type
         is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
 
@@ -198,10 +198,10 @@ class ReduceMemoryObject(MemoryObject):
         if is_user_type and hasattr(self.obj, '__init__'):
             init_method = getattr(obj_type, '__init__')
             init_from_object = init_method is object.__init__
-            logging.debug("init_from_object = %s, signarure_size = %s", init_from_object, len(inspect.signature(init_method).parameters))
+            logging.debug("init_from_object = %s, signature_size = %s", init_from_object, len(inspect.signature(init_method).parameters))
             if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
                 logging.debug("init with one argument! %s", init_method)
-                constructor_arguments = [self.reduce_value[1][0]]
+                constructor_arguments = []
                 callable_constructor = obj_type
                 return constructor_arguments, callable_constructor
 

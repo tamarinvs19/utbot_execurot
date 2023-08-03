@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+import re
 from itertools import zip_longest
 import pickle
 from typing import Any, Callable, Dict, List, Optional, Set, Type, Iterable
@@ -157,14 +158,6 @@ class ReduceMemoryObject(MemoryObject):
             )
         ]
 
-        constructor_kind = get_constructor_kind(self.reduce_value[0])
-
-        is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_reduce_user_type = len(self.reduce_value[1]) == 3 and isinstance(self.reduce_value[1][0], type(self.obj)) and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
-        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1 and isinstance(self.reduce_value[1][0], type(self.obj))
-        is_user_type = is_reduce_user_type or is_reduce_ex_user_type
-        is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
-
         constructor_arguments, callable_constructor = self.constructor_builder()
 
         self.constructor = get_constructor_info(callable_constructor)
@@ -173,8 +166,6 @@ class ReduceMemoryObject(MemoryObject):
         logging.debug("Constructor args: %s", constructor_arguments)
         self.args = serializer.write_object_to_memory(constructor_arguments)
 
-        logging.debug("Params: %s, %s, %s", is_reconstructor, is_user_type, is_newobj)
-        logging.debug("Reduce: %s", self.reduce_value)
         if isinstance(constructor_arguments, Iterable):
             logging.debug("Constructor args: %s", constructor_arguments)
             self.deserialized_obj = callable_constructor(*constructor_arguments)
@@ -204,6 +195,11 @@ class ReduceMemoryObject(MemoryObject):
                 constructor_arguments = []
                 callable_constructor = obj_type
                 return constructor_arguments, callable_constructor
+
+        if isinstance(self.obj, re.Pattern):
+            constructor_arguments = (self.obj.pattern, self.obj.flags)
+            callable_constructor = re.compile
+            return constructor_arguments, callable_constructor
 
         if is_newobj:
             constructor_arguments = self.reduce_value[1]

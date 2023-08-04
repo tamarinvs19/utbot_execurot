@@ -159,12 +159,23 @@ class DumpLoader:
             elif dump_object.typeinfo.fullname == 'builtins.tuple':
                 real_object = tuple(self.load_object(item) for item in dump_object.items)
             else:
-                real_object = [self.load_object(item) for item in dump_object.items]
+                real_object = []
+
+                id_ = PythonId(str(id(real_object)))
+                self.dump_id_to_real_id[python_id] = id_
+                self.memory[id_] = real_object
+
+                for item in dump_object.items:
+                    real_object.append(self.load_object(item))
         elif isinstance(dump_object, DictMemoryObject):
-            real_object = {
-                    self.load_object(key): self.load_object(value)
-                    for key, value in dump_object.items.items()
-                    }
+            real_object = {}
+
+            id_ = PythonId(str(id(real_object)))
+            self.dump_id_to_real_id[python_id] = id_
+            self.memory[id_] = real_object
+
+            for key, value in dump_object.items.items():
+                real_object[self.load_object(key)] = self.load_object(value)
         elif isinstance(dump_object, ReduceMemoryObject):
             constructor = eval(dump_object.constructor.qualname)
             args = self.load_object(dump_object.args)

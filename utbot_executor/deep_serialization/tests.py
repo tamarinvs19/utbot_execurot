@@ -161,3 +161,69 @@ def test_incomparable():
     serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
     memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
     assert not memory_dump.objects[serialized_obj_ids[0]].comparable
+
+
+def test_recursive_list():
+    obj = [1, 2, 3]
+    obj.append(obj)
+
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
+    assert not memory_dump.objects[serialized_obj_ids[0]].comparable
+
+    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
+    assert deserialized_obj[0] == deserialized_obj[-1][0]
+
+
+def test_recursive_dict():
+    obj = {1: 2}
+    obj[3] = obj
+
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
+    assert not memory_dump.objects[serialized_obj_ids[0]].comparable
+
+    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
+    assert deserialized_obj[1] == deserialized_obj[3][1]
+
+
+def test_deep_recursive_list():
+    inner_inner = [7, 8, 9]
+    inner = [4, 5, 6]
+    obj = [1, 2, 3]
+    obj.append(inner)
+    inner.append(inner_inner)
+    inner_inner.append(obj)
+
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
+    assert not memory_dump.objects[serialized_obj_ids[0]].comparable
+
+    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
+    assert deserialized_obj == deserialized_obj[-1][-1][-1]
+
+
+class Node:
+    def __init__(self, name: str):
+        self.name = name
+        self.children: typing.List[Node] = []
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+
+def test_recursive_object():
+    node1 = Node("1")
+    node2 = Node("2")
+    node3 = Node("3")
+    node1.children.append(node2)
+    node2.children.append(node3)
+    node3.children.append(node1)
+
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([node1], True)
+    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
+    assert deserialized_obj == deserialized_obj.children[0].children[0].children[0]

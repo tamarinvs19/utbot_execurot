@@ -78,12 +78,15 @@ class ListMemoryObject(MemoryObject):
 
     def initialize(self) -> None:
         serializer = PythonSerializer()
+        self.deserialized_obj = []  # for recursive collections
+        self.comparable = False  # for recursive collections
 
         for elem in self.obj:
             elem_id = serializer.write_object_to_memory(elem)
             self.items.append(elem_id)
+            self.deserialized_obj.append(serializer[elem_id])
 
-        deserialized_obj = [serializer[elem] for elem in self.items]
+        deserialized_obj = self.deserialized_obj
         if self.typeinfo.fullname == 'builtins.tuple':
             deserialized_obj = tuple(deserialized_obj)
         elif self.typeinfo.fullname == 'builtins.set':
@@ -110,16 +113,16 @@ class DictMemoryObject(MemoryObject):
     def initialize(self) -> None:
         self.obj: Dict
         serializer = PythonSerializer()
+        self.deserialized_obj = {}  # for recursive dicts
+        self.comparable = False  # for recursive dicts
 
         for key, value in self.obj.items():
             key_id = serializer.write_object_to_memory(key)
             value_id = serializer.write_object_to_memory(value)
             self.items[key_id] = value_id
+            self.deserialized_obj[serializer[key_id]] = serializer[value_id]
 
-        deserialized_obj = {
-            serializer[key_id]: serializer[value_id]
-            for key_id, value_id in self.items.items()
-        }
+        deserialized_obj = self.deserialized_obj
         equals_len = len(self.obj) == len(deserialized_obj)
         comparable = equals_len and all(serializer.get_by_id(value_id).comparable for _ in self.items)
 

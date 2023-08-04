@@ -124,7 +124,7 @@ class DictMemoryObject(MemoryObject):
 
         deserialized_obj = self.deserialized_obj
         equals_len = len(self.obj) == len(deserialized_obj)
-        comparable = equals_len and all(serializer.get_by_id(value_id).comparable for _ in self.items)
+        comparable = equals_len and all(serializer.get_by_id(value_id).comparable for _ in self.items.values())
 
         super()._initialize(deserialized_obj, comparable)
 

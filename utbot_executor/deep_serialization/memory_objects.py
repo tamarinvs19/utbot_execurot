@@ -260,7 +260,7 @@ class MemoryObjectProvider(object):
 class ListMemoryObjectProvider(MemoryObjectProvider):
     @staticmethod
     def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
-        if isinstance(obj, (list, set, tuple, frozenset)):  # any(type(obj) == t for t in (list, set, tuple)):
+        if any(type(obj) == t for t in (list, set, tuple, frozenset)):
             return ListMemoryObject
         return None
 
@@ -268,7 +268,7 @@ class ListMemoryObjectProvider(MemoryObjectProvider):
 class DictMemoryObjectProvider(MemoryObjectProvider):
     @staticmethod
     def get_serializer(obj: object) -> Optional[Type[MemoryObject]]:
-        if isinstance(obj, dict):  # type(obj) == dict:
+        if type(obj) == dict:
             return DictMemoryObject
         return None
 

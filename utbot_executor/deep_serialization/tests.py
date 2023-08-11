@@ -227,3 +227,15 @@ def test_recursive_object():
     deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
     deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
     assert deserialized_obj == deserialized_obj.children[0].children[0].children[0]
+
+
+@pytest.mark.parametrize(
+    'obj,imports',
+    [
+        (collections.Counter('abcababa'), ['utbot_executor.deep_serialization.tests', 'collections']),
+        (collections.UserDict({1: 'a'}), ['utbot_executor.deep_serialization.tests', 'collections']),
+        (collections.deque([1, 2, 3]), ['utbot_executor.deep_serialization.tests', 'collections']),
+    ],
+)
+def test_collections(obj: typing.Any, imports: typing.List[str]):
+    template_test_assert(obj, imports)

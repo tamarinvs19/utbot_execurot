@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import datetime
+import json
 import typing
 
 import pytest
@@ -239,3 +240,22 @@ def test_recursive_object():
 )
 def test_collections(obj: typing.Any, imports: typing.List[str]):
     template_test_assert(obj, imports)
+
+
+@pytest.mark.parametrize(
+    'obj,strategy',
+    [
+        (1, 'repr'),
+        ('1', 'repr'),
+        ([1, 2], 'list'),
+        ({1, 2}, 'list'),
+        ((1, 2), 'list'),
+        ({1: 2}, 'dict'),
+        (collections.Counter('faksjdf'), 'reduce'),
+    ],
+)
+def test_strategy(obj: typing.Any, strategy: str):
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    deserialized_data = json.loads(serialized_memory_dump)
+    assert deserialized_data['objects'][serialized_obj_ids[0]]['strategy'] == strategy
+

@@ -327,7 +327,7 @@ def test_strategy(obj: typing.Any, strategy: str):
 @pytest.mark.parametrize(
     "obj,imports",
     [
-        (re.compile("\d+jflsf"), ["utbot_executor.deep_serialization.tests", "re"]),
+        (re.compile(r"\d+jflsf"), ["utbot_executor.deep_serialization.tests", "re"]),
         (
             collections.abc.KeysView,
             ["utbot_executor.deep_serialization.tests", "collections"],

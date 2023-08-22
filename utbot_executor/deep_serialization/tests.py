@@ -354,17 +354,11 @@ T = typing.TypeVar("T")
     sys.version_info.major <= 3 and sys.version_info.minor < 11,
     reason="typing.TypeVarTuple (PEP 646) has been added in Python 3.11",
 )
-@pytest.mark.parametrize(
-    "obj,imports",
-    [
-        (
-            typing.TypeVarTuple("T2"),
-            ["utbot_executor.deep_serialization.tests", "typing"],
-        ),
-    ],
-)
-def test_type_var_tuple(obj: typing.Any, imports: typing.List[str]):
+def test_type_var_tuple():
     globals()["T2"] = typing.TypeVarTuple("T2")
+    obj = typing.TypeVarTuple("T2")
+    imports = ["utbot_executor.deep_serialization.tests", "typing"]
+
     deserialized_obj = get_deserialized_obj(obj, imports)
     assert deserialized_obj.__name__ == obj.__name__
 

@@ -3,6 +3,7 @@ import dataclasses
 import datetime
 import json
 import re
+import sys
 import typing
 
 import pytest
@@ -347,7 +348,25 @@ def test_corner_cases(obj: typing.Any, imports: typing.List[str]):
 
 
 T = typing.TypeVar("T")
-T2 = typing.TypeVarTuple("T2")
+
+
+@pytest.mark.skipif(
+    sys.version_info.major <= 3 and sys.version_info.minor < 11,
+    reason="typing.TypeVarTuple (PEP 646) has been added in Python 3.11",
+)
+@pytest.mark.parametrize(
+    "obj,imports",
+    [
+        (
+            typing.TypeVarTuple("T2"),
+            ["utbot_executor.deep_serialization.tests", "typing"],
+        ),
+    ],
+)
+def test_type_var_tuple(obj: typing.Any, imports: typing.List[str]):
+    globals()["T2"] = typing.TypeVarTuple("T2")
+    deserialized_obj = get_deserialized_obj(obj, imports)
+    assert deserialized_obj.__name__ == obj.__name__
 
 
 @pytest.mark.parametrize(
@@ -355,10 +374,6 @@ T2 = typing.TypeVarTuple("T2")
     [
         (typing.TypeVar("T"), ["utbot_executor.deep_serialization.tests", "typing"]),
         (T, ["utbot_executor.deep_serialization.tests", "typing"]),
-        (
-            typing.TypeVarTuple("T2"),
-            ["utbot_executor.deep_serialization.tests", "typing"],
-        ),
     ],
 )
 def test_type_var(obj: typing.Any, imports: typing.List[str]):

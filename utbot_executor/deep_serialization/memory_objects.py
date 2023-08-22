@@ -254,20 +254,10 @@ class ReduceMemoryObject(MemoryObject):
                 callable_constructor = obj_type
                 return constructor_arguments, callable_constructor
 
-        # Special corners
+        # Special case
         if isinstance(self.obj, re.Pattern):
             constructor_arguments = (self.obj.pattern, self.obj.flags)
             callable_constructor = re.compile
-            return constructor_arguments, callable_constructor
-
-        if isinstance(self.obj, typing.TypeVar):
-            constructor_arguments = (self.obj.__name__,)
-            callable_constructor = typing.TypeVar
-            return constructor_arguments, callable_constructor
-
-        if isinstance(self.obj, typing.TypeVarTuple):
-            constructor_arguments = (self.obj.__name__,)
-            callable_constructor = typing.TypeVarTuple
             return constructor_arguments, callable_constructor
         # ----
 

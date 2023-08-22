@@ -2,37 +2,46 @@ import collections
 import dataclasses
 import datetime
 import json
+import re
 import typing
 
 import pytest
 
 from utbot_executor.deep_serialization import json_converter
-from utbot_executor.deep_serialization.deep_serialization import serialize_objects_dump, deserialize_objects
+from utbot_executor.deep_serialization.deep_serialization import (
+    serialize_objects_dump,
+    deserialize_objects,
+)
+
+
+def get_deserialized_obj(obj: typing.Any, imports: typing.List[str]):
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
+    deserialized_objs = deserialize_objects(
+        serialized_obj_ids, serialized_memory_dump, imports
+    )
+    return deserialized_objs[serialized_obj_ids[0]]
 
 
 def template_test_assert(obj: typing.Any, imports: typing.List[str]):
-    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
-    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, imports)
-    deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
-    assert obj == deserialized_obj
+    assert obj == get_deserialized_obj(obj, imports)
 
 
 @pytest.mark.parametrize(
-    'obj',
+    "obj",
     [
         (1,),
-        ('abc',),
+        ("abc",),
         (1.23,),
         (False,),
         (True,),
-        (b'123',),
-        (r'1\n23',),
+        (b"123",),
+        (r"1\n23",),
         ([1, 2, 3],),
-        (['a', 2, 3],),
+        (["a", 2, 3],),
         ([],),
         ({1, 2},),
         (set(),),
-        ({1: 2, '3': '4'},),
+        ({1: 2, "3": "4"},),
         ({},),
         ((1, 2, 3),),
         (tuple(),),
@@ -43,12 +52,12 @@ def test_primitives(obj: typing.Any):
 
 
 @pytest.mark.parametrize(
-    'obj,imports',
+    "obj,imports",
     [
-        (datetime.datetime(2023, 6, 23), ['datetime']),
-        (collections.deque([1, 2, 3]), ['collections']),
-        (collections.Counter('jflaskdfjslkdruovnerjf:a'), ['collections']),
-        (collections.defaultdict(int, [(1, 2)]), ['collections']),
+        (datetime.datetime(2023, 6, 23), ["datetime"]),
+        (collections.deque([1, 2, 3]), ["collections"]),
+        (collections.Counter("jflaskdfjslkdruovnerjf:a"), ["collections"]),
+        (collections.defaultdict(int, [(1, 2)]), ["collections"]),
     ],
 )
 def test_with_imports(obj: typing.Any, imports: typing.List[str]):
@@ -64,10 +73,16 @@ class MyDataClass:
 
 
 @pytest.mark.parametrize(
-    'obj,imports',
+    "obj,imports",
     [
-        (MyDataClass(1, 'a', [1, 2], {'a': b'c'}), ['utbot_executor.deep_serialization.tests']),
-        (MyDataClass(1, 'a--------------\n\t', [], {}), ['utbot_executor.deep_serialization.tests']),
+        (
+            MyDataClass(1, "a", [1, 2], {"a": b"c"}),
+            ["utbot_executor.deep_serialization.tests"],
+        ),
+        (
+            MyDataClass(1, "a--------------\n\t", [], {}),
+            ["utbot_executor.deep_serialization.tests"],
+        ),
     ],
 )
 def test_dataclasses(obj: typing.Any, imports: typing.List[str]):
@@ -84,7 +99,12 @@ class MyClass:
     def __eq__(self, other):
         if not isinstance(other, MyClass):
             return False
-        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d
+        return (
+            self.a == other.a
+            and self.b == other.b
+            and self.c == other.c
+            and self.d == other.d
+        )
 
 
 class EmptyClass:
@@ -101,12 +121,18 @@ class EmptyInitClass:
 
 
 @pytest.mark.parametrize(
-    'obj,imports',
+    "obj,imports",
     [
-        (MyClass(1, 'a', [1, 2], {'a': b'c'}), ['utbot_executor.deep_serialization.tests']),
-        (MyClass(1, 'a--------------\n\t', [], {}), ['utbot_executor.deep_serialization.tests']),
-        (EmptyClass(), ['utbot_executor.deep_serialization.tests']),
-        (EmptyInitClass(), ['utbot_executor.deep_serialization.tests']),
+        (
+            MyClass(1, "a", [1, 2], {"a": b"c"}),
+            ["utbot_executor.deep_serialization.tests"],
+        ),
+        (
+            MyClass(1, "a--------------\n\t", [], {}),
+            ["utbot_executor.deep_serialization.tests"],
+        ),
+        (EmptyClass(), ["utbot_executor.deep_serialization.tests"]),
+        (EmptyInitClass(), ["utbot_executor.deep_serialization.tests"]),
     ],
 )
 def test_classes(obj: typing.Any, imports: typing.List[str]):
@@ -114,7 +140,7 @@ def test_classes(obj: typing.Any, imports: typing.List[str]):
 
 
 class MyClassWithSlots:
-    __slots__ = ['a', 'b', 'c', 'd']
+    __slots__ = ["a", "b", "c", "d"]
 
     def __init__(self, a: int, b: str, c: typing.List[int], d: typing.Dict[str, bytes]):
         self.a = a
@@ -125,10 +151,15 @@ class MyClassWithSlots:
     def __eq__(self, other):
         if not isinstance(other, MyClassWithSlots):
             return False
-        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d
+        return (
+            self.a == other.a
+            and self.b == other.b
+            and self.c == other.c
+            and self.d == other.d
+        )
 
     def __str__(self):
-        return f'<MyClassWithSlots: a={self.a}, b={self.b}, c={self.c}, d={self.d}>'
+        return f"<MyClassWithSlots: a={self.a}, b={self.b}, c={self.c}, d={self.d}>"
 
     def __setstate__(self, state):
         for key, value in state[1].items():
@@ -136,10 +167,16 @@ class MyClassWithSlots:
 
 
 @pytest.mark.parametrize(
-    'obj,imports',
+    "obj,imports",
     [
-        (MyClassWithSlots(1, 'a', [1, 2], {'a': b'c'}), ['utbot_executor.deep_serialization.tests', 'copyreg']),
-        (MyClassWithSlots(1, 'a--------------\n\t', [], {}), ['utbot_executor.deep_serialization.tests', 'copyreg']),
+        (
+            MyClassWithSlots(1, "a", [1, 2], {"a": b"c"}),
+            ["utbot_executor.deep_serialization.tests", "copyreg"],
+        ),
+        (
+            MyClassWithSlots(1, "a--------------\n\t", [], {}),
+            ["utbot_executor.deep_serialization.tests", "copyreg"],
+        ),
     ],
 )
 def test_classes_with_slots(obj: typing.Any, imports: typing.List[str]):
@@ -172,7 +209,11 @@ def test_recursive_list():
     memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
     assert not memory_dump.objects[serialized_obj_ids[0]].comparable
 
-    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_objs = deserialize_objects(
+        serialized_obj_ids,
+        serialized_memory_dump,
+        ["utbot_executor.deep_serialization.tests", "copyreg"],
+    )
     deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
     assert deserialized_obj[0] == deserialized_obj[-1][0]
 
@@ -185,7 +226,11 @@ def test_recursive_dict():
     memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
     assert not memory_dump.objects[serialized_obj_ids[0]].comparable
 
-    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_objs = deserialize_objects(
+        serialized_obj_ids,
+        serialized_memory_dump,
+        ["utbot_executor.deep_serialization.tests", "copyreg"],
+    )
     deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
     assert deserialized_obj[1] == deserialized_obj[3][1]
 
@@ -202,7 +247,11 @@ def test_deep_recursive_list():
     memory_dump = json_converter.deserialize_memory_objects(serialized_memory_dump)
     assert not memory_dump.objects[serialized_obj_ids[0]].comparable
 
-    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    deserialized_objs = deserialize_objects(
+        serialized_obj_ids,
+        serialized_memory_dump,
+        ["utbot_executor.deep_serialization.tests", "copyreg"],
+    )
     deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
     assert deserialized_obj == deserialized_obj[-1][-1][-1]
 
@@ -224,18 +273,33 @@ def test_recursive_object():
     node2.children.append(node3)
     node3.children.append(node1)
 
-    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([node1], True)
-    deserialized_objs = deserialize_objects(serialized_obj_ids, serialized_memory_dump, ['utbot_executor.deep_serialization.tests', 'copyreg'])
+    serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump(
+        [node1], True
+    )
+    deserialized_objs = deserialize_objects(
+        serialized_obj_ids,
+        serialized_memory_dump,
+        ["utbot_executor.deep_serialization.tests", "copyreg"],
+    )
     deserialized_obj = deserialized_objs[serialized_obj_ids[0]]
     assert deserialized_obj == deserialized_obj.children[0].children[0].children[0]
 
 
 @pytest.mark.parametrize(
-    'obj,imports',
+    "obj,imports",
     [
-        (collections.Counter('abcababa'), ['utbot_executor.deep_serialization.tests', 'collections']),
-        (collections.UserDict({1: 'a'}), ['utbot_executor.deep_serialization.tests', 'collections']),
-        (collections.deque([1, 2, 3]), ['utbot_executor.deep_serialization.tests', 'collections']),
+        (
+            collections.Counter("abcababa"),
+            ["utbot_executor.deep_serialization.tests", "collections"],
+        ),
+        (
+            collections.UserDict({1: "a"}),
+            ["utbot_executor.deep_serialization.tests", "collections"],
+        ),
+        (
+            collections.deque([1, 2, 3]),
+            ["utbot_executor.deep_serialization.tests", "collections"],
+        ),
     ],
 )
 def test_collections(obj: typing.Any, imports: typing.List[str]):
@@ -243,19 +307,60 @@ def test_collections(obj: typing.Any, imports: typing.List[str]):
 
 
 @pytest.mark.parametrize(
-    'obj,strategy',
+    "obj,strategy",
     [
-        (1, 'repr'),
-        ('1', 'repr'),
-        ([1, 2], 'list'),
-        ({1, 2}, 'list'),
-        ((1, 2), 'list'),
-        ({1: 2}, 'dict'),
-        (collections.Counter('faksjdf'), 'reduce'),
+        (1, "repr"),
+        ("1", "repr"),
+        ([1, 2], "list"),
+        ({1, 2}, "list"),
+        ((1, 2), "list"),
+        ({1: 2}, "dict"),
+        (collections.Counter("faksjdf"), "reduce"),
     ],
 )
 def test_strategy(obj: typing.Any, strategy: str):
     serialized_obj_ids, _, serialized_memory_dump = serialize_objects_dump([obj], True)
     deserialized_data = json.loads(serialized_memory_dump)
-    assert deserialized_data['objects'][serialized_obj_ids[0]]['strategy'] == strategy
+    assert deserialized_data["objects"][serialized_obj_ids[0]]["strategy"] == strategy
 
+
+@pytest.mark.parametrize(
+    "obj,imports",
+    [
+        (re.compile("\d+jflsf"), ["utbot_executor.deep_serialization.tests", "re"]),
+        (
+            collections.abc.KeysView,
+            ["utbot_executor.deep_serialization.tests", "collections"],
+        ),
+        (
+            collections.abc.KeysView({}),
+            [
+                "utbot_executor.deep_serialization.tests",
+                "collections",
+                "collections.abc",
+            ],
+        ),
+    ],
+)
+def test_corner_cases(obj: typing.Any, imports: typing.List[str]):
+    template_test_assert(obj, imports)
+
+
+T = typing.TypeVar("T")
+T2 = typing.TypeVarTuple("T2")
+
+
+@pytest.mark.parametrize(
+    "obj,imports",
+    [
+        (typing.TypeVar("T"), ["utbot_executor.deep_serialization.tests", "typing"]),
+        (T, ["utbot_executor.deep_serialization.tests", "typing"]),
+        (
+            typing.TypeVarTuple("T2"),
+            ["utbot_executor.deep_serialization.tests", "typing"],
+        ),
+    ],
+)
+def test_type_var(obj: typing.Any, imports: typing.List[str]):
+    deserialized_obj = get_deserialized_obj(obj, imports)
+    assert deserialized_obj.__name__ == obj.__name__

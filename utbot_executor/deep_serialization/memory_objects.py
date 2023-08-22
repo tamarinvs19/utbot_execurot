@@ -3,13 +3,25 @@ from __future__ import annotations
 import inspect
 import logging
 import re
+import sys
+import typing
 from itertools import zip_longest
 import pickle
 from typing import Any, Callable, Dict, List, Optional, Set, Type, Iterable
 
 from utbot_executor.deep_serialization.config import PICKLE_PROTO
-from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
-    has_repr, TypeInfo, get_constructor_kind, has_reduce_ex, get_constructor_info
+from utbot_executor.deep_serialization.utils import (
+    PythonId,
+    get_kind,
+    has_reduce,
+    check_comparability,
+    get_repr,
+    has_repr,
+    TypeInfo,
+    get_constructor_kind,
+    has_reduce_ex,
+    get_constructor_info,
+)
 
 
 class MemoryObject:
@@ -25,7 +37,9 @@ class MemoryObject:
         self.typeinfo = get_kind(obj)
         self.obj = obj
 
-    def _initialize(self, deserialized_obj: object = None, comparable: bool = True) -> None:
+    def _initialize(
+        self, deserialized_obj: object = None, comparable: bool = True
+    ) -> None:
         self.deserialized_obj = deserialized_obj
         self.comparable = comparable
         self.is_draft = False
@@ -37,7 +51,7 @@ class MemoryObject:
         return str(id(self.obj))
 
     def __repr__(self) -> str:
-        if hasattr(self, 'obj'):
+        if hasattr(self, "obj"):
             return str(self.obj)
         return str(self.typeinfo)
 
@@ -50,7 +64,7 @@ class MemoryObject:
 
 
 class ReprMemoryObject(MemoryObject):
-    strategy: str = 'repr'
+    strategy: str = "repr"
     value: str
 
     def __init__(self, repr_object: object) -> None:
@@ -69,7 +83,7 @@ class ReprMemoryObject(MemoryObject):
 
 
 class ListMemoryObject(MemoryObject):
-    strategy: str = 'list'
+    strategy: str = "list"
     items: List[PythonId] = []
 
     def __init__(self, list_object: object) -> None:
@@ -87,9 +101,9 @@ class ListMemoryObject(MemoryObject):
             self.deserialized_obj.append(serializer[elem_id])
 
         deserialized_obj = self.deserialized_obj
-        if self.typeinfo.fullname == 'builtins.tuple':
+        if self.typeinfo.fullname == "builtins.tuple":
             deserialized_obj = tuple(deserialized_obj)
-        elif self.typeinfo.fullname == 'builtins.set':
+        elif self.typeinfo.fullname == "builtins.set":
             deserialized_obj = set(deserialized_obj)
 
         comparable = all(serializer.get_by_id(elem).comparable for elem in self.items)
@@ -97,13 +111,13 @@ class ListMemoryObject(MemoryObject):
         super()._initialize(deserialized_obj, comparable)
 
     def __repr__(self) -> str:
-        if hasattr(self, 'obj'):
+        if hasattr(self, "obj"):
             return str(self.obj)
-        return f'{self.typeinfo.kind}{self.items}'
+        return f"{self.typeinfo.kind}{self.items}"
 
 
 class DictMemoryObject(MemoryObject):
-    strategy: str = 'dict'
+    strategy: str = "dict"
     items: Dict[PythonId, PythonId] = {}
 
     def __init__(self, dict_object: object) -> None:
@@ -124,18 +138,21 @@ class DictMemoryObject(MemoryObject):
 
         deserialized_obj = self.deserialized_obj
         equals_len = len(self.obj) == len(deserialized_obj)
-        comparable = equals_len and all(serializer.get_by_id(value_id).comparable for value_id in self.items.values())
+        comparable = equals_len and all(
+            serializer.get_by_id(value_id).comparable
+            for value_id in self.items.values()
+        )
 
         super()._initialize(deserialized_obj, comparable)
 
     def __repr__(self) -> str:
-        if hasattr(self, 'obj'):
+        if hasattr(self, "obj"):
             return str(self.obj)
-        return f'{self.typeinfo.kind}{self.items}'
+        return f"{self.typeinfo.kind}{self.items}"
 
 
 class ReduceMemoryObject(MemoryObject):
-    strategy: str = 'reduce'
+    strategy: str = "reduce"
     constructor: TypeInfo
     args: PythonId
     state: PythonId
@@ -152,35 +169,66 @@ class ReduceMemoryObject(MemoryObject):
             py_object_reduce = reduce_object.__reduce_ex__(PICKLE_PROTO)
         else:
             py_object_reduce = reduce_object.__reduce__()
-        self.reduce_value = [
-            default if obj is None else obj
-            for obj, default in zip_longest(
-                py_object_reduce,
-                [None, [], {}, [], {}],
-                fillvalue=None
-            )
-        ]
 
-        constructor_arguments, callable_constructor = self.constructor_builder()
+        if isinstance(py_object_reduce, str):
+            name = getattr(reduce_object, "__qualname__", None)
+            if name is None:
+                name = reduce_object.__name__
+            module_name = pickle.whichmodule(reduce_object, name)
+            try:
+                __import__(module_name, level=0)
+                module = sys.modules[module_name]
+                obj2, parent = pickle._getattribute(module, name)
+            except (ImportError, KeyError, AttributeError):
+                raise pickle.PicklingError(
+                    "Can't pickle %r: it's not found as %s.%s"
+                    % (reduce_object, module_name, name)
+                ) from None
+            else:
+                if obj2 is not reduce_object:
+                    self.comparable = False
+            typeinfo = TypeInfo(module_name, name)
+            self.constructor = typeinfo
+            self.deserialized_obj = obj2
+            self.reduce_value = []
+        else:
+            self.reduce_value = [
+                default if obj is None else obj
+                for obj, default in zip_longest(
+                    py_object_reduce, [None, [], {}, [], {}], fillvalue=None
+                )
+            ]
 
-        self.constructor = get_constructor_info(callable_constructor)
-        logging.debug("Constructor: %s", callable_constructor)
-        logging.debug("Constructor info: %s", self.constructor)
-        logging.debug("Constructor args: %s", constructor_arguments)
-        self.args = serializer.write_object_to_memory(constructor_arguments)
+            constructor_arguments, callable_constructor = self.constructor_builder()
 
-        if isinstance(constructor_arguments, Iterable):
+            self.constructor = get_constructor_info(callable_constructor)
+            logging.debug("Constructor: %s", callable_constructor)
+            logging.debug("Constructor info: %s", self.constructor)
             logging.debug("Constructor args: %s", constructor_arguments)
-            self.deserialized_obj = callable_constructor(*constructor_arguments)
+            self.args = serializer.write_object_to_memory(constructor_arguments)
 
-    def constructor_builder(self):
+            if isinstance(constructor_arguments, Iterable):
+                logging.debug("Constructor args: %s", constructor_arguments)
+                self.deserialized_obj = callable_constructor(*constructor_arguments)
+
+    def constructor_builder(self) -> typing.Tuple[typing.Any, typing.Callable]:
         constructor_kind = get_constructor_kind(self.reduce_value[0])
 
-        is_reconstructor = constructor_kind.qualname == 'copyreg._reconstructor'
-        is_reduce_user_type = len(self.reduce_value[1]) == 3 and isinstance(self.reduce_value[1][0], type(self.obj)) and self.reduce_value[1][1] is object and self.reduce_value[1][2] is None
-        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1 and isinstance(self.reduce_value[1][0], type(self.obj))
+        is_reconstructor = constructor_kind.qualname == "copyreg._reconstructor"
+        is_reduce_user_type = (
+            len(self.reduce_value[1]) == 3
+            and isinstance(self.reduce_value[1][0], type(self.obj))
+            and self.reduce_value[1][1] is object
+            and self.reduce_value[1][2] is None
+        )
+        is_reduce_ex_user_type = len(self.reduce_value[1]) == 1 and isinstance(
+            self.reduce_value[1][0], type(self.obj)
+        )
         is_user_type = is_reduce_user_type or is_reduce_ex_user_type
-        is_newobj = constructor_kind.qualname in {'copyreg.__newobj__', 'copyreg.__newobj_ex__'}
+        is_newobj = constructor_kind.qualname in {
+            "copyreg.__newobj__",
+            "copyreg.__newobj_ex__",
+        }
 
         logging.debug("Params: %s, %s, %s", is_reconstructor, is_user_type, is_newobj)
 
@@ -189,29 +237,52 @@ class ReduceMemoryObject(MemoryObject):
         callable_constructor: Callable
         constructor_arguments: Any
 
-        if is_user_type and hasattr(self.obj, '__init__'):
-            init_method = getattr(obj_type, '__init__')
+        if is_user_type and hasattr(self.obj, "__init__"):
+            init_method = getattr(obj_type, "__init__")
             init_from_object = init_method is object.__init__
-            logging.debug("init_from_object = %s, signature_size = %s", init_from_object, len(inspect.signature(init_method).parameters))
-            if (not init_from_object and len(inspect.signature(init_method).parameters) == 1) or init_from_object:
+            logging.debug(
+                "init_from_object = %s, signature_size = %s",
+                init_from_object,
+                len(inspect.signature(init_method).parameters),
+            )
+            if (
+                not init_from_object
+                and len(inspect.signature(init_method).parameters) == 1
+            ) or init_from_object:
                 logging.debug("init with one argument! %s", init_method)
                 constructor_arguments = []
                 callable_constructor = obj_type
                 return constructor_arguments, callable_constructor
 
+        # Special corners
         if isinstance(self.obj, re.Pattern):
             constructor_arguments = (self.obj.pattern, self.obj.flags)
             callable_constructor = re.compile
             return constructor_arguments, callable_constructor
 
+        if isinstance(self.obj, typing.TypeVar):
+            constructor_arguments = (self.obj.__name__,)
+            callable_constructor = typing.TypeVar
+            return constructor_arguments, callable_constructor
+
+        if isinstance(self.obj, typing.TypeVarTuple):
+            constructor_arguments = (self.obj.__name__,)
+            callable_constructor = typing.TypeVarTuple
+            return constructor_arguments, callable_constructor
+        # ----
+
         if is_newobj:
             constructor_arguments = self.reduce_value[1]
-            callable_constructor = getattr(obj_type, '__new__')
+            callable_constructor = getattr(obj_type, "__new__")
             return constructor_arguments, callable_constructor
 
         if is_reconstructor and is_user_type:
             constructor_arguments = self.reduce_value[1]
-            if len(constructor_arguments) == 3 and constructor_arguments[-1] is None and constructor_arguments[-2] == object:
+            if (
+                len(constructor_arguments) == 3
+                and constructor_arguments[-1] is None
+                and constructor_arguments[-2] == object
+            ):
                 del constructor_arguments[1:]
             callable_constructor = object.__new__
             return constructor_arguments, callable_constructor
@@ -224,27 +295,43 @@ class ReduceMemoryObject(MemoryObject):
         serializer = PythonSerializer()
 
         self.comparable = True  # for recursive objects
-        self.state = serializer.write_object_to_memory(self.reduce_value[2])
-        self.listitems = serializer.write_object_to_memory(list(self.reduce_value[3]))
-        self.dictitems = serializer.write_object_to_memory(dict(self.reduce_value[4]))
-
         deserialized_obj = self.deserialized_obj
-        state = serializer[self.state]
-        if isinstance(state, dict):
-            for key, value in state.items():
-                setattr(deserialized_obj, key, value)
-        elif hasattr(deserialized_obj, '__setstate__'):
-            deserialized_obj.__setstate__(state)
+        if len(self.reduce_value) == 0:
+            # It is global var
+            self.args = serializer.write_object_to_memory(None)
+            self.state = serializer.write_object_to_memory(None)
+            self.listitems = serializer.write_object_to_memory(None)
+            self.dictitems = serializer.write_object_to_memory(None)
+        else:
+            self.state = serializer.write_object_to_memory(self.reduce_value[2])
+            self.listitems = serializer.write_object_to_memory(
+                list(self.reduce_value[3])
+            )
+            self.dictitems = serializer.write_object_to_memory(
+                dict(self.reduce_value[4])
+            )
 
-        items = serializer[self.listitems]
-        if isinstance(items, Iterable):
-            for item in items:
-                deserialized_obj.append(item)
+            state = serializer[self.state]
+            if isinstance(state, dict):
+                for key, value in state.items():
+                    setattr(deserialized_obj, key, value)
+            elif hasattr(deserialized_obj, "__setstate__"):
+                deserialized_obj.__setstate__(state)
+            elif isinstance(state, tuple) and len(state) == 2:
+                _, slotstate = state
+                if slotstate:
+                    for key, value in slotstate.items():
+                        setattr(deserialized_obj, key, value)
 
-        dictitems = serializer[self.dictitems]
-        if isinstance(dictitems, Dict):
-            for key, value in dictitems.items():
-                deserialized_obj[key] = value
+            items = serializer[self.listitems]
+            if isinstance(items, Iterable):
+                for item in items:
+                    deserialized_obj.append(item)
+
+            dictitems = serializer[self.dictitems]
+            if isinstance(dictitems, Dict):
+                for key, value in dictitems.items():
+                    deserialized_obj[key] = value
 
         comparable = self.obj == deserialized_obj
 
@@ -357,4 +444,4 @@ class PythonSerializer:
                 mem_obj.initialize()
                 return id_
 
-        raise ValueError(f'Can not find provider for object {py_object}.')
+        raise ValueError(f"Can not find provider for object {py_object}.")

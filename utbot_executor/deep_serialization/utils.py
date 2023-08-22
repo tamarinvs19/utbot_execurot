@@ -6,7 +6,7 @@ from typing import NewType
 
 from utbot_executor.deep_serialization.config import PICKLE_PROTO
 
-PythonId = NewType('PythonId', str)
+PythonId = NewType("PythonId", str)
 
 
 @dataclasses.dataclass
@@ -16,22 +16,24 @@ class TypeInfo:
 
     @property
     def qualname(self):
-        if self.module == '' or self.module == 'builtins':
+        if self.module == "" or self.module == "builtins":
             return self.kind
-        return f'{self.module}.{self.kind}'
+        return f"{self.module}.{self.kind}"
 
     @property
     def fullname(self):
-        if self.module == '':
+        if self.module == "":
             return self.kind
         else:
-            return f'{self.module}.{self.kind}'
+            return f"{self.module}.{self.kind}"
 
     @staticmethod
     def from_str(representation: str) -> TypeInfo:
-        if '.' in representation:
-            return TypeInfo(representation.rsplit('.', 1)[0], representation.rsplit('.', 1)[1])
-        return TypeInfo('', representation)
+        if "." in representation:
+            return TypeInfo(
+                representation.rsplit(".", 1)[0], representation.rsplit(".", 1)[1]
+            )
+        return TypeInfo("", representation)
 
     def __str__(self):
         return self.qualname
@@ -78,7 +80,7 @@ def get_constructor_info(constructor: object) -> TypeInfo:
 
 
 def has_reduce(py_object: object) -> bool:
-    reduce = getattr(py_object, '__reduce__', None)
+    reduce = getattr(py_object, "__reduce__", None)
     if reduce is None:
         return False
     try:
@@ -93,7 +95,7 @@ def has_reduce(py_object: object) -> bool:
 
 
 def has_reduce_ex(py_object: object) -> bool:
-    reduce_ex = getattr(py_object, '__reduce_ex__', None)
+    reduce_ex = getattr(py_object, "__reduce_ex__", None)
     if reduce_ex is None:
         return False
     try:
@@ -111,21 +113,33 @@ def get_repr(py_object: object) -> str:
     if isinstance(py_object, type):
         return str(get_kind(py_object))
     if isinstance(py_object, float):
-        if repr(py_object) == 'nan':
+        if repr(py_object) == "nan":
             return "float('nan')"
-        if repr(py_object) == 'inf':
+        if repr(py_object) == "inf":
             return "float('inf')"
-        if repr(py_object) == '-inf':
+        if repr(py_object) == "-inf":
             return "float('-inf')"
         return repr(py_object)
     if isinstance(py_object, complex):
-        return f"complex(real={get_repr(py_object.real)}, imag={get_repr(py_object.imag)})"
+        return (
+            f"complex(real={get_repr(py_object.real)}, imag={get_repr(py_object.imag)})"
+        )
     return repr(py_object)
+
+
+def add_imports(module: str):
+    for i in range(1, module.count(".") + 2):
+        submodule_name = ".".join(module.split(".", maxsplit=i)[:i])
+        if submodule_name not in globals():
+            try:
+                globals()[submodule_name] = importlib.import_module(submodule_name)
+            except ModuleNotFoundError:
+                pass
 
 
 def check_eval(py_object: object) -> bool:
     module = get_kind(py_object).module
-    globals()[module] = importlib.import_module(module)
+    add_imports(module)
     try:
         eval(get_repr(py_object))
         return True
@@ -135,20 +149,20 @@ def check_eval(py_object: object) -> bool:
 
 def has_repr(py_object: object) -> bool:
     reprable_types = [
-            type(None),
-            int,
-            bool,
-            float,
-            bytes,
-            bytearray,
-            str,
-            # tuple,
-            # list,
-            # dict,
-            # set,
-            # frozenset,
-            type,
-        ]
+        type(None),
+        int,
+        bool,
+        float,
+        bytes,
+        bytearray,
+        str,
+        # tuple,
+        # list,
+        # dict,
+        # set,
+        # frozenset,
+        type,
+    ]
     if type(py_object) in reprable_types:
         return True
 
